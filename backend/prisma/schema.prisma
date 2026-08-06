@@ -1,0 +1,52 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String            @id @default(uuid())
+  name           String            @default("Nzlbl")
+  avatar         String            @default("🌍")
+  bio            String            @default("Yaratıcı Evren Mimarı")
+  favoriteColor  String            @default("#00f3ff")
+  favoriteMusic  String            @default("M83 — Midnight City 🎶")
+  tags           String            @default("Tasarımcı,Yazılımcı,Kaşif")
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  celestials     CelestialObject[]
+  dailyMoods     DailyMood[]
+}
+
+model CelestialObject {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category           String   // "Goal", "Memory", "Person", "Hobby", "Moon"
+  title              String
+  description        String?
+  imageUrl           String?  // Photo attachment for memories & milestones
+  skin               String   @default("earth") // "earth", "saturn", "pink", "purple", "crystal", "sun"
+  orbit              Int      @default(4) // 1: People/Moons, 2: Hobbies, 3: Memories, 4: Goals
+  angle              Float    @default(0.0)
+  radiusOffset       Float    @default(0.0)
+  isCompleted        Boolean  @default(false)
+  constellationGroup String?  // e.g. "CREATIVE SOUL", "THE TRAVELER"
+  parentPlanetId     String?  // for Moons orbiting specific planets
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model DailyMood {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String   // ISO YYYY-MM-DD
+  mood      String   // "Great", "Good", "Okay", "NotGreat", "Terrible"
+  note      String?
+  angle     Float    @default(0.0)
+  createdAt DateTime @default(now())
+}
