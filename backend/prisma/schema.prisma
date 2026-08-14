@@ -10,34 +10,47 @@ generator client {
 model User {
   id             String            @id @default(uuid())
   name           String            @default("Nzlbl")
+  universeName   String            @default("Nzlbl's Universe")
   avatar         String            @default("🌍")
   bio            String            @default("Yaratıcı Evren Mimarı")
-  favoriteColor  String            @default("#00f3ff")
-  favoriteMusic  String            @default("M83 — Midnight City 🎶")
-  tags           String            @default("Tasarımcı,Yazılımcı,Kaşif")
+  favoriteColor  String            @default("#ff85a1")
+  activeTheme    String            @default("holographic")
+  soundEnabled   Boolean           @default(true)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   celestials     CelestialObject[]
   dailyMoods     DailyMood[]
+  habits         Habit[]
+  journalEntries JournalEntry[]
+  locations      Location[]
+  achievements   Achievement[]
 }
 
 model CelestialObject {
   id                 String   @id @default(uuid())
   userId             String
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category           String   // "Goal", "Memory", "Person", "Hobby", "Moon"
+  category           String   // "Goal", "Memory", "Person", "Hobby", "Moon", "Habit"
   title              String
   description        String?
-  imageUrl           String?  // Photo attachment for memories & milestones
-  skin               String   @default("earth") // "earth", "saturn", "pink", "purple", "crystal", "sun"
+  imageUrl           String?  // JSON string array of photo URLs
+  audioUrl           String?  // Voice recording attachment
+  skin               String   @default("pink") // "pink", "purple", "crystal", "blush", "sun"
   orbit              Int      @default(4) // 1: People/Moons, 2: Hobbies, 3: Memories, 4: Goals
   angle              Float    @default(0.0)
   radiusOffset       Float    @default(0.0)
+  progress           Int      @default(0) // 0 - 100% progress for Goals & Habits
   isCompleted        Boolean  @default(false)
+  importance         Int      @default(3) // 1-5 importance scale
+  color              String?  // Custom HEX color override
+  relationship       String?  // For People: "Anne", "Baba", "En Yakın Dost"
+  firstMet           String?  // For People: Date first met
+  tags               String?  // Comma separated tags
   constellationGroup String?  // e.g. "CREATIVE SOUL", "THE TRAVELER"
   parentPlanetId     String?  // for Moons orbiting specific planets
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  journalEntries     JournalEntry[]
 }
 
 model DailyMood {
@@ -47,6 +60,58 @@ model DailyMood {
   date      String   // ISO YYYY-MM-DD
   mood      String   // "Great", "Good", "Okay", "NotGreat", "Terrible"
   note      String?
+  tags      String?
   angle     Float    @default(0.0)
   createdAt DateTime @default(now())
+}
+
+model Habit {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  frequency       String    @default("daily") // "daily", "weekly"
+  streak          Int       @default(0)
+  longestStreak   Int       @default(0)
+  lastCompletedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model JournalEntry {
+  id          String           @id @default(uuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  mood        String?
+  celestialId String?
+  celestial   CelestialObject? @relation(fields: [celestialId], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Location {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  latitude    Float
+  longitude   Float
+  date        String?
+  description String?
+  imageUrl    String?  // JSON string array of photos
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code        String   // "FIRST_MEMORY", "DREAMER", "PEOPLE_PERSON", "UNIVERSE_BUILDER", "SUPERNOVA"
+  title       String
+  description String
+  icon        String   @default("🏆")
+  unlockedAt  DateTime @default(now())
 }

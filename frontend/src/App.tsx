@@ -1,17 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CelestialObject, DailyMood, UserProfile } from './types/galaxy';
+import { CelestialObject, DailyMood, UserProfile, Achievement } from './types/galaxy';
+import { Camera } from './canvas/Camera';
+import { ParticleSystem } from './canvas/ParticleSystem';
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Core Engine Controllers
+  const cameraRef = useRef<Camera>(new Camera());
+  const particleSystemRef = useRef<ParticleSystem>(new ParticleSystem());
+
   const [user, setUser] = useState<UserProfile | null>(null);
   const [celestials, setCelestials] = useState<CelestialObject[]>([]);
   const [dailyMoods, setDailyMoods] = useState<DailyMood[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   
-  // UI & Filter States
+  // UI & Filter & Theme States
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL');
+  const [activeTheme, setActiveTheme] = useState<string>('Pink Dream');
   
   // Big Bang Timeline Slider States
   const [timelineValue, setTimelineValue] = useState<number>(100);
@@ -21,28 +29,34 @@ export default function App() {
   // UI Modal & Side Drawer states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMoodModal, setShowMoodModal] = useState(false);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [selectedObject, setSelectedObject] = useState<CelestialObject | null>(null);
   const [magicToast, setMagicToast] = useState<{ title: string; message: string } | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [activePhotoIndex, setActivePhotoIndex] = useState<number>(0);
   const [showLightbox, setShowLightbox] = useState<boolean>(false);
 
-  // Form & Local Upload states
+  // Form & Media Capsule states
   const [category, setCategory] = useState<string>('Goal');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [progressInput, setProgressInput] = useState<number>(0);
+  const [relationship, setRelationship] = useState('');
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedMood, setSelectedMood] = useState('Great');
   const [moodNote, setMoodNote] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  // Voice Memory Recorder States
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
   // Camera state & Generous Spaced Orbit Radii
-  const camera = useRef({ x: 0, y: 0, zoom: 1, targetZoom: 1, isDragging: false, dragStart: { x: 0, y: 0 } });
   const orbitRadii = [0, 220, 390, 570, 760];
   const audioCtxRef = useRef<AudioContext | null>(null);
-
-  // Dynamic planet position tracker for 100% precise click collision raycasting!
   const planetPositionsRef = useRef<Record<string, { px: number; py: number }>>({});
 
   useEffect(() => {
@@ -56,6 +70,7 @@ export default function App() {
       if (dataC.success) {
         setUser(dataC.user);
         setCelestials(dataC.celestials);
+        if (dataC.achievements) setAchievements(dataC.achievements);
       }
 
       const resM = await fetch('/api/daily-moods');
@@ -87,6 +102,38 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedObject]);
 
+  // Voice Memory Recorder Logic
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioBlobUrl(url);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Microphone access error:', err);
+      showToast('⚠️ MİKROFON İZNİ REDDEDİLDİ', 'Ses kaydı yapabilmek için mikrofon erişimine izin verin.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
   // Real Multi-File Local Upload Handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -112,26 +159,6 @@ export default function App() {
       console.error('Upload failed:', err);
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  const togglePlayTimeline = () => {
-    if (isPlayingTimeline) {
-      setIsPlayingTimeline(false);
-      if (timelineTimerRef.current) clearInterval(timelineTimerRef.current);
-    } else {
-      setIsPlayingTimeline(true);
-      setTimelineValue(0);
-      timelineTimerRef.current = setInterval(() => {
-        setTimelineValue((prev) => {
-          if (prev >= 100) {
-            clearInterval(timelineTimerRef.current);
-            setIsPlayingTimeline(false);
-            return 100;
-          }
-          return prev + 2;
-        });
-      }, 100);
     }
   };
 
@@ -201,8 +228,8 @@ export default function App() {
     const handleCanvasClick = (e: MouseEvent) => {
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
-      const worldX = (e.clientX - cx - camera.current.x) / camera.current.zoom;
-      const worldY = (e.clientY - cy - camera.current.y) / camera.current.zoom;
+      const worldX = (e.clientX - cx - cameraRef.current.x) / cameraRef.current.zoom;
+      const worldY = (e.clientY - cy - cameraRef.current.y) / cameraRef.current.zoom;
 
       for (let obj of celestials) {
         const pos = planetPositionsRef.current[obj.id];
@@ -218,28 +245,49 @@ export default function App() {
       }
     };
 
+    const handleWheel = (e: WheelEvent) => {
+      cameraRef.current.handleWheel(e);
+    };
+
     canvas.addEventListener('click', handleCanvasClick);
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
 
     const render = (time: number) => {
-      camera.current.zoom += (camera.current.targetZoom - camera.current.zoom) * 0.1;
+      cameraRef.current.update();
 
+      // Theme Gradient Engine
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      grad.addColorStop(0, '#fff0f5');
-      grad.addColorStop(0.35, '#f3e8ff');
-      grad.addColorStop(0.7, '#e0e7ff');
-      grad.addColorStop(1, '#fff5f7');
+      if (activeTheme === 'Deep Space') {
+        grad.addColorStop(0, '#0d0714');
+        grad.addColorStop(0.5, '#1a0b2e');
+        grad.addColorStop(1, '#05020a');
+      } else if (activeTheme === 'Sunset Universe') {
+        grad.addColorStop(0, '#2d112c');
+        grad.addColorStop(0.5, '#530031');
+        grad.addColorStop(1, '#820027');
+      } else if (activeTheme === 'Nature Galaxy') {
+        grad.addColorStop(0, '#061c14');
+        grad.addColorStop(0.5, '#0b3526');
+        grad.addColorStop(1, '#020d09');
+      } else {
+        // Soft Holographic Pink Dream
+        grad.addColorStop(0, '#fff0f5');
+        grad.addColorStop(0.35, '#f3e8ff');
+        grad.addColorStop(0.7, '#e0e7ff');
+        grad.addColorStop(1, '#fff5f7');
+      }
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.save();
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
-      ctx.translate(cx + camera.current.x, cy + camera.current.y);
-      ctx.scale(camera.current.zoom, camera.current.zoom);
+      ctx.translate(cx + cameraRef.current.x, cy + cameraRef.current.y);
+      ctx.scale(cameraRef.current.zoom, cameraRef.current.zoom);
 
-      const colors = ['', 'rgba(255, 183, 197, 0.55)', 'rgba(216, 180, 254, 0.55)', 'rgba(255, 209, 220, 0.55)', 'rgba(186, 230, 253, 0.55)'];
+      const ringColors = ['', 'rgba(255, 183, 197, 0.55)', 'rgba(216, 180, 254, 0.55)', 'rgba(255, 209, 220, 0.55)', 'rgba(186, 230, 253, 0.55)'];
       for (let i = 1; i < orbitRadii.length; i++) {
-        ctx.strokeStyle = colors[i];
+        ctx.strokeStyle = ringColors[i];
         ctx.lineWidth = 1.8;
         ctx.setLineDash([6, 10]);
         ctx.beginPath();
@@ -278,7 +326,7 @@ export default function App() {
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#2d1836';
+      ctx.fillStyle = activeTheme === 'Deep Space' ? '#ffffff' : '#2d1836';
       ctx.font = '700 14px "Plus Jakarta Sans"';
       ctx.textAlign = 'center';
       ctx.fillText(`🌸 ${user?.name || 'Nzlbl'} (Ana Gezegen)`, 0, r + 28);
@@ -315,9 +363,23 @@ export default function App() {
           ctx.stroke();
         }
 
+        // Planet Growth Stages Rendering (0% -> 25% -> 50% -> 75% -> 100%)
         if (obj.category === 'Goal' && !obj.isCompleted) {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-          ctx.strokeStyle = 'rgba(255, 183, 197, 0.6)';
+          const prog = obj.progress || 0;
+          
+          // Outer Glow based on progress %
+          if (prog >= 50) {
+            const gAura = ctx.createRadialGradient(0, 0, 10, 0, 0, 32);
+            gAura.addColorStop(0, 'rgba(255, 183, 197, 0.4)');
+            gAura.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = gAura;
+            ctx.beginPath();
+            ctx.arc(0, 0, 32, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.fillStyle = prog === 0 ? 'rgba(80, 80, 80, 0.85)' : 'rgba(255, 255, 255, 0.9)';
+          ctx.strokeStyle = prog >= 75 ? '#ff85a1' : 'rgba(255, 183, 197, 0.6)';
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.arc(0, 0, 22, 0, Math.PI * 2);
@@ -325,9 +387,9 @@ export default function App() {
           ctx.stroke();
 
           ctx.fillStyle = '#ff85a1';
-          ctx.font = '12px FontAwesome';
+          ctx.font = '11px "Plus Jakarta Sans"';
           ctx.textAlign = 'center';
-          ctx.fillText('🔒', 0, 4);
+          ctx.fillText(`🔒 %${prog}`, 0, 4);
         } else {
           const pAura = ctx.createRadialGradient(0, 0, 10, 0, 0, 36);
           pAura.addColorStop(0, 'rgba(255, 183, 197, 0.5)');
@@ -364,13 +426,16 @@ export default function App() {
         if (obj.category === 'Person') icon = '💗';
         if (obj.category === 'Moon') icon = '🌙';
 
-        ctx.fillStyle = isSelected ? '#ff85a1' : '#2d1836';
+        ctx.fillStyle = isSelected ? '#ff85a1' : (activeTheme === 'Deep Space' ? '#ffffff' : '#2d1836');
         ctx.font = isSelected ? '700 13px "Plus Jakarta Sans"' : '600 12px "Plus Jakarta Sans"';
         ctx.textAlign = 'center';
         ctx.fillText(`${icon} ${obj.title}`, 0, 32);
 
         ctx.restore();
       });
+
+      // Particle System Rendering
+      particleSystemRef.current.updateAndRender(ctx);
 
       ctx.restore();
       animationFrameId = requestAnimationFrame(render);
@@ -379,10 +444,11 @@ export default function App() {
     animationFrameId = requestAnimationFrame(render);
     return () => {
       canvas.removeEventListener('click', handleCanvasClick);
+      canvas.removeEventListener('wheel', handleWheel);
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [celestials, user, searchQuery, activeCategoryFilter, selectedObject, timelineValue]);
+  }, [celestials, user, searchQuery, activeCategoryFilter, selectedObject, timelineValue, activeTheme]);
 
   const handleAddObject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -396,7 +462,7 @@ export default function App() {
       const res = await fetch('/api/celestials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, title, description, imageUrl, orbit })
+        body: JSON.stringify({ category, title, description, imageUrl, audioUrl: audioBlobUrl, orbit, relationship, progress: progressInput })
       });
       const data = await res.json();
       if (data.success) {
@@ -405,7 +471,55 @@ export default function App() {
         setTitle('');
         setDescription('');
         setUploadedPhotos([]);
+        setAudioBlobUrl(null);
+        setProgressInput(0);
         playSoundEffect(587.33, 'triangle');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleUpdateProgress = async (id: string, newProg: number) => {
+    try {
+      const res = await fetch(`/api/celestials/${id}/progress`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ progress: newProg })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCelestials(celestials.map(c => c.id === id ? data.data : c));
+        setSelectedObject(data.data);
+
+        if (newProg >= 100) {
+          // Trigger Particle Shower & Celebration
+          const pos = planetPositionsRef.current[id];
+          if (pos) {
+            particleSystemRef.current.spawnConfetti(pos.px, pos.py, 80);
+          }
+          playSoundEffect(1046.50, 'sawtooth');
+          showToast('PLANET DISCOVERED! 🎉', data.magicMessage);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleExportUniverse = async () => {
+    try {
+      const res = await fetch('/api/celestials/export');
+      const data = await res.json();
+      if (data.success) {
+        const jsonStr = JSON.stringify(data.data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `my-little-universe-export-${Date.now()}.json`;
+        a.click();
+        showToast('🌌 EVREN DIŞA AKTARILDI!', 'Tüm anıların ve verilerin JSON dosyası olarak bilgisayarına indirildi.');
       }
     } catch (e) {
       console.error(e);
@@ -426,21 +540,6 @@ export default function App() {
         setMoodNote('');
         playSoundEffect(880, 'sine');
         showToast('GÜNÜN YILDIZI OLUŞTU! 🌙', data.magicMessage);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleCompleteGoal = async (id: string) => {
-    try {
-      const res = await fetch(`/api/celestials/${id}/complete`, { method: 'PATCH' });
-      const data = await res.json();
-      if (data.success) {
-        setCelestials(celestials.map(c => c.id === id ? { ...c, isCompleted: true } : c));
-        setSelectedObject(null);
-        playSoundEffect(1046.50, 'sawtooth');
-        showToast('PLANET DISCOVERED! 🎉', data.magicMessage);
       }
     } catch (e) {
       console.error(e);
@@ -490,7 +589,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Floating Search Pill (Top Right) */}
+      {/* Floating Search & Settings Widget (Top Right) */}
       <div className="search-floating">
         <input
           type="text"
@@ -499,6 +598,23 @@ export default function App() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        
+        {/* Theme Switcher Selector */}
+        <select
+          value={activeTheme}
+          onChange={(e) => setActiveTheme(e.target.value)}
+          style={{ padding: '10px 14px', borderRadius: '20px', background: 'rgba(255,255,255,0.85)', border: '1.5px solid rgba(255,255,255,0.95)', fontWeight: 700, color: '#2d1836', cursor: 'pointer' }}
+        >
+          <option value="Pink Dream">🌸 Pink Dream</option>
+          <option value="Deep Space">🌌 Deep Space</option>
+          <option value="Sunset Universe">🌅 Sunset Universe</option>
+          <option value="Nature Galaxy">🌿 Nature Galaxy</option>
+        </select>
+
+        <button className="btn-action-cancel" onClick={handleExportUniverse} style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
+          💾 Export
+        </button>
+
         <button className={`btn ${soundEnabled ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSoundEnabled(!soundEnabled)} style={{ padding: '10px 16px' }}>
           {soundEnabled ? '🎵' : '🔇'}
         </button>
@@ -546,13 +662,12 @@ export default function App() {
               <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
             </div>
 
-            {/* Pinterest Multi-Photo Polaroid Gallery Carousel */}
+            {/* Multi-Photo Polaroid Carousel */}
             {photoList.length > 0 ? (
               <div style={{ position: 'relative', marginBottom: '20px' }}>
                 <div style={{ background: '#fff', padding: '14px 14px 26px 14px', borderRadius: '22px', boxShadow: '0 12px 35px rgba(216,180,254,0.3)', transform: 'rotate(-2deg)', border: '1.5px solid rgba(255,255,255,0.9)', position: 'relative' }}>
                   <img src={photoList[activePhotoIndex]} alt={selectedObject.title} onClick={() => setShowLightbox(true)} style={{ width: '100%', height: '230px', objectFit: 'cover', borderRadius: '14px', cursor: 'zoom-in' }} />
                   
-                  {/* Photo Navigation Arrow Buttons OVER Polaroid Image */}
                   {photoList.length > 1 && (
                     <>
                       <button className="photo-nav-btn" style={{ left: '10px' }} onClick={(e) => { e.stopPropagation(); setActivePhotoIndex((activePhotoIndex - 1 + photoList.length) % photoList.length); }}>‹</button>
@@ -565,30 +680,6 @@ export default function App() {
                     <span style={{ fontSize: '0.78rem', color: '#6b4d75', fontWeight: 700 }}>📷 {activePhotoIndex + 1} / {photoList.length}</span>
                   </div>
                 </div>
-
-                {/* Photo Thumbnail Strip */}
-                {photoList.length > 1 && (
-                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginTop: '12px', paddingBottom: '6px' }}>
-                    {photoList.map((url, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => setActivePhotoIndex(idx)}
-                        style={{
-                          width: '54px',
-                          height: '54px',
-                          borderRadius: '12px',
-                          overflow: 'hidden',
-                          border: activePhotoIndex === idx ? '2px solid #ff85a1' : '1.5px solid rgba(255,255,255,0.8)',
-                          cursor: 'pointer',
-                          opacity: activePhotoIndex === idx ? 1 : 0.6,
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        <img src={url} alt="thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             ) : (
               <div style={{ fontSize: '4.5rem', textAlign: 'center', margin: '20px 0', filter: 'drop-shadow(0 4px 20px rgba(216,180,254,0.5))' }}>
@@ -599,23 +690,36 @@ export default function App() {
             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: '"Playfair Display"', marginBottom: '6px', color: '#2d1836' }}>{selectedObject.title}</h2>
             <p style={{ fontSize: '0.85rem', color: '#6b4d75', marginBottom: '16px', fontWeight: 500 }}><i className="fa-regular fa-calendar"></i> {new Date(selectedObject.createdAt).toLocaleDateString('tr-TR')}</p>
             
+            {/* Interactive Goal Progress Slider System (0% -> 100%) */}
+            {selectedObject.category === 'Goal' && (
+              <div style={{ background: 'rgba(255, 255, 255, 0.85)', padding: '18px', borderRadius: '20px', border: '1.5px solid rgba(255, 255, 255, 0.9)', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#2d1836' }}>Hedef İlerlemesi</span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ff85a1' }}>%{selectedObject.progress || 0}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={selectedObject.progress || 0}
+                  onChange={(e) => handleUpdateProgress(selectedObject.id, Number(e.target.value))}
+                  style={{ width: '100%', accentColor: '#ff85a1', cursor: 'pointer' }}
+                />
+              </div>
+            )}
+
+            {/* Voice Memory Player */}
+            {selectedObject.audioUrl && (
+              <div style={{ background: 'rgba(255, 255, 255, 0.85)', padding: '16px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.9)', marginBottom: '20px' }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2d1836', marginBottom: '8px' }}>🎤 Ses Kaydı Anısı</p>
+                <audio controls src={selectedObject.audioUrl} style={{ width: '100%' }} />
+              </div>
+            )}
+
             <div style={{ background: 'rgba(255, 255, 255, 0.75)', padding: '18px', borderRadius: '20px', border: '1.5px solid rgba(255, 255, 255, 0.9)', marginBottom: '20px', lineHeight: 1.6, fontSize: '0.95rem', color: '#2d1836', fontWeight: 500 }}>
               {selectedObject.description || 'Bu varlık için herhangi bir detay girilmemiş.'}
             </div>
-
-            {selectedObject.category === 'Goal' && (
-              <div style={{ marginBottom: '20px' }}>
-                {selectedObject.isCompleted ? (
-                  <div style={{ padding: '14px', background: 'rgba(255, 183, 197, 0.3)', border: '1.5px solid #ffb7c5', borderRadius: '20px', color: '#2d1836', fontWeight: 700, textAlign: 'center' }}>
-                    ✨ PLANET DISCOVERED! (Keşfedildi)
-                  </div>
-                ) : (
-                  <button onClick={() => handleCompleteGoal(selectedObject.id)} className="btn-action-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                    <i className="fa-solid fa-wand-magic-sparkles"></i> PLANET DISCOVERED! 🎉
-                  </button>
-                )}
-              </div>
-            )}
 
             <div style={{ marginTop: 'auto', display: 'flex', gap: '10px' }}>
               <button onClick={() => handleDeleteObject(selectedObject.id)} className="btn" style={{ background: 'rgba(255,133,161,0.2)', color: '#2d1836', border: '1.5px solid rgba(255,133,161,0.4)', width: '100%', justifyContent: 'center' }}>
@@ -626,7 +730,7 @@ export default function App() {
         );
       })()}
 
-      {/* Fullscreen Photo Lightbox Modal WITH Full Photo Navigation Arrows! */}
+      {/* Fullscreen Photo Lightbox Modal */}
       {showLightbox && selectedObject && (() => {
         const photoList = getPhotoList(selectedObject.imageUrl);
         if (photoList.length === 0) return null;
@@ -636,29 +740,13 @@ export default function App() {
             <div style={{ background: '#fff', padding: '20px 20px 38px 20px', borderRadius: '32px', maxWidth: '88vw', maxHeight: '90vh', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', textAlign: 'center', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
               <img src={photoList[activePhotoIndex]} alt="lightbox" style={{ maxWidth: '100%', maxHeight: '72vh', borderRadius: '20px', objectFit: 'contain' }} />
 
-              {/* Fullscreen Navigation Left Arrow Button */}
               {photoList.length > 1 && (
-                <button
-                  className="photo-nav-btn"
-                  style={{ left: '-24px', width: '48px', height: '48px', fontSize: '1.5rem' }}
-                  onClick={() => setActivePhotoIndex((activePhotoIndex - 1 + photoList.length) % photoList.length)}
-                >
-                  ‹
-                </button>
+                <>
+                  <button className="photo-nav-btn" style={{ left: '-24px', width: '48px', height: '48px', fontSize: '1.5rem' }} onClick={() => setActivePhotoIndex((activePhotoIndex - 1 + photoList.length) % photoList.length)}>‹</button>
+                  <button className="photo-nav-btn" style={{ right: '-24px', width: '48px', height: '48px', fontSize: '1.5rem' }} onClick={() => setActivePhotoIndex((activePhotoIndex + 1) % photoList.length)}>›</button>
+                </>
               )}
 
-              {/* Fullscreen Navigation Right Arrow Button */}
-              {photoList.length > 1 && (
-                <button
-                  className="photo-nav-btn"
-                  style={{ right: '-24px', width: '48px', height: '48px', fontSize: '1.5rem' }}
-                  onClick={() => setActivePhotoIndex((activePhotoIndex + 1) % photoList.length)}
-                >
-                  ›
-                </button>
-              )}
-
-              {/* Close Button */}
               <button onClick={() => setShowLightbox(false)} style={{ position: 'absolute', top: '-15px', right: '-15px', background: '#ff85a1', border: '2px solid #fff', color: '#fff', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', fontWeight: 800, fontSize: '1.1rem' }}>✕</button>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', padding: '0 10px' }}>
@@ -678,10 +766,10 @@ export default function App() {
         </div>
       )}
 
-      {/* Add Modal */}
+      {/* Add Modal with Voice Memory Recorder */}
       {showAddModal && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '490px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '490px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ fontFamily: '"Playfair Display"', marginBottom: '16px', color: '#2d1836' }}>Evrene Yeni Varlık Ekle 🌸</h2>
             <form onSubmit={handleAddObject}>
               <div style={{ marginBottom: '12px' }}>
@@ -710,6 +798,23 @@ export default function App() {
                 <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Açıklama veya detay..." style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#fff0f5', color: '#2d1836', border: '1.5px solid rgba(255,183,197,0.6)', fontWeight: 600 }} />
               </div>
 
+              {/* Voice Recording Section */}
+              <div style={{ marginBottom: '16px', background: '#fff0f5', padding: '14px', borderRadius: '18px', border: '1.5px solid rgba(255,183,197,0.6)' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#6b4d75', fontWeight: 600 }}>Ses Kaydı Ekle 🎤</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {!isRecording ? (
+                    <button type="button" className="btn-action-cancel" onClick={startRecording} style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+                      🎙️ Kaydı Başlat
+                    </button>
+                  ) : (
+                    <button type="button" className="btn-action-primary" onClick={stopRecording} style={{ padding: '8px 16px', fontSize: '0.85rem', background: '#ff4d6d' }}>
+                      ⏹️ Kaydı Bitir
+                    </button>
+                  )}
+                  {audioBlobUrl && <span style={{ fontSize: '0.8rem', color: '#2d1836', fontWeight: 700 }}>✅ Ses kaydedildi!</span>}
+                </div>
+              </div>
+
               {/* Real Multi-File Local Uploader */}
               <div style={{ marginBottom: '22px' }}>
                 <label style={{ display: 'block', marginBottom: '6px', color: '#6b4d75', fontWeight: 600 }}>Bilgisayardan Fotoğraf Yükle 📸</label>
@@ -728,17 +833,6 @@ export default function App() {
                     style={{ display: 'none' }}
                   />
                 </div>
-
-                {/* Uploaded Photos Preview Strip */}
-                {uploadedPhotos.length > 0 && (
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
-                    {uploadedPhotos.map((url, idx) => (
-                      <div key={idx} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '14px', overflow: 'hidden', border: '2px solid #ffb7c5', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-                        <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Action Buttons */}

@@ -10,9 +10,9 @@ const INITIAL_CELESTIALS = [
   { category: "Hobby", title: "Müzik & Gitar", description: "Akustik gitar besteleri ve synthwave soundscape", skin: "crystal", orbit: 2, angle: 1.2, constellationGroup: "CREATIVE SOUL" },
   { category: "Hobby", title: "Kitap Okuma", description: "Bilimkurgu klasikleri ve felsefe", skin: "crystal", orbit: 2, angle: 2.0, constellationGroup: "CREATIVE SOUL" },
   { category: "Memory", title: "Bodrum Tatili 2026", description: "Ege koylarında harika bir tatil 🌅", imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80", skin: "sun", orbit: 3, angle: 1.8 },
-  { category: "Goal", title: "Japonya'ya Gitmek", description: "Kyoto ve Tokyo'yu gezmek, kiraz çiçeklerini görmek 🌸", imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80", skin: "saturn", orbit: 4, angle: 2.7, isCompleted: false },
-  { category: "Goal", title: "İspanyolca Öğrenmek", description: "B2 seviyesinde akıcı konuşma 🇪🇸", skin: "earth", orbit: 4, angle: 5.2, isCompleted: true },
-  { category: "Goal", title: "20 Kitap Okuma Hedefi", description: "20 yeni eser bitirmek 📚", skin: "purple", orbit: 4, angle: 0.1, isCompleted: false }
+  { category: "Goal", title: "Japonya'ya Gitmek", description: "Kyoto ve Tokyo'yu gezmek, kiraz çiçeklerini görmek 🌸", imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=600&q=80", skin: "saturn", orbit: 4, angle: 2.7, isCompleted: false, progress: 50 },
+  { category: "Goal", title: "İspanyolca Öğrenmek", description: "B2 seviyesinde akıcı konuşma 🇪🇸", skin: "earth", orbit: 4, angle: 5.2, isCompleted: true, progress: 100 },
+  { category: "Goal", title: "20 Kitap Okuma Hedefi", description: "20 yeni eser bitirmek 📚", skin: "purple", orbit: 4, angle: 0.1, isCompleted: false, progress: 25 }
 ];
 
 async function ensureDefaultUser() {
@@ -21,11 +21,10 @@ async function ensureDefaultUser() {
     user = await prisma.user.create({
       data: {
         name: "Nzlbl",
+        universeName: "Nzlbl's Universe",
         avatar: "🌍",
         bio: "Yaratıcı Evren Mimarı",
-        favoriteColor: "#00f3ff",
-        favoriteMusic: "M83 — Midnight City 🎶",
-        tags: "Tasarımcı,Yazılımcı,Kaşif"
+        favoriteColor: "#ff85a1"
       }
     });
 
@@ -37,6 +36,17 @@ async function ensureDefaultUser() {
         }
       });
     }
+
+    // Default Achievements
+    await prisma.achievement.create({
+      data: {
+        userId: user.id,
+        code: "UNIVERSE_BORN",
+        title: "🌌 Evren Doğdu",
+        description: "İlk kişisel dijital evrenini başlattın!",
+        icon: "✨"
+      }
+    });
   }
   return user;
 }
@@ -48,7 +58,10 @@ export const getCelestials = async (req: Request, res: Response) => {
       where: { userId: user.id },
       orderBy: { createdAt: 'asc' }
     });
-    return res.json({ success: true, user, celestials });
+    const achievements = await prisma.achievement.findMany({
+      where: { userId: user.id }
+    });
+    return res.json({ success: true, user, celestials, achievements });
   } catch (error) {
     console.error('getCelestials Error:', error);
     return res.status(500).json({ success: false, error: 'Internal Server Error' });
@@ -58,7 +71,7 @@ export const getCelestials = async (req: Request, res: Response) => {
 export const createCelestial = async (req: Request, res: Response) => {
   try {
     const user = await ensureDefaultUser();
-    const { category, title, description, imageUrl, skin, orbit, angle, constellationGroup } = req.body;
+    const { category, title, description, imageUrl, audioUrl, skin, orbit, angle, progress, constellationGroup, relationship, firstMet, tags } = req.body;
 
     const newObj = await prisma.celestialObject.create({
       data: {
@@ -67,11 +80,16 @@ export const createCelestial = async (req: Request, res: Response) => {
         title,
         description,
         imageUrl: imageUrl || null,
-        skin: skin || "earth",
+        audioUrl: audioUrl || null,
+        skin: skin || "pink",
         orbit: orbit || 4,
         angle: angle || Math.random() * Math.PI * 2,
+        progress: progress || 0,
         constellationGroup: category === "Hobby" ? (constellationGroup || "CREATIVE SOUL") : null,
-        isCompleted: false
+        relationship: category === "Person" ? (relationship || "Yakın Dost") : null,
+        firstMet: firstMet || null,
+        tags: tags || null,
+        isCompleted: (progress || 0) >= 100
       }
     });
 
@@ -82,12 +100,43 @@ export const createCelestial = async (req: Request, res: Response) => {
   }
 };
 
+export const updateProgress = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { progress } = req.body;
+
+    const current = await prisma.celestialObject.findUnique({ where: { id } });
+    if (!current) return res.status(404).json({ success: false, error: 'Object not found' });
+
+    const newProgress = Math.min(100, Math.max(0, Number(progress)));
+    const isCompleted = newProgress >= 100;
+
+    const updated = await prisma.celestialObject.update({
+      where: { id },
+      data: {
+        progress: newProgress,
+        isCompleted
+      }
+    });
+
+    let magicMessage = `Progression updated to %${newProgress}`;
+    if (isCompleted && !current.isCompleted) {
+      magicMessage = `PLANET DISCOVERED! 🎉 "${updated.title}" tam kıvama ulaştı ve evrende parıldamaya başladı!`;
+    }
+
+    return res.json({ success: true, data: updated, magicMessage });
+  } catch (error) {
+    console.error('updateProgress Error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to update progress' });
+  }
+};
+
 export const completeGoal = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updated = await prisma.celestialObject.update({
       where: { id },
-      data: { isCompleted: true }
+      data: { isCompleted: true, progress: 100 }
     });
     return res.json({ success: true, data: updated, magicMessage: `PLANET DISCOVERED! "${updated.title}" Keşfedildi ve evrende parlamaya başladı! 🎉` });
   } catch (error) {
@@ -116,5 +165,71 @@ export const analyzeMemory = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('analyzeMemory Error:', error);
     return res.status(500).json({ success: false, error: 'AI analysis failed' });
+  }
+};
+
+// Export & Import Full Universe JSON
+export const exportUniverse = async (req: Request, res: Response) => {
+  try {
+    const user = await ensureDefaultUser();
+    const celestials = await prisma.celestialObject.findMany({ where: { userId: user.id } });
+    const dailyMoods = await prisma.dailyMood.findMany({ where: { userId: user.id } });
+    const achievements = await prisma.achievement.findMany({ where: { userId: user.id } });
+
+    const exportData = {
+      version: "2.0",
+      exportedAt: new Date().toISOString(),
+      user,
+      celestials,
+      dailyMoods,
+      achievements
+    };
+
+    return res.json({ success: true, data: exportData });
+  } catch (error) {
+    console.error('exportUniverse Error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to export universe' });
+  }
+};
+
+export const importUniverse = async (req: Request, res: Response) => {
+  try {
+    const { data } = req.body;
+    if (!data || !data.celestials) {
+      return res.status(400).json({ success: false, error: 'Invalid universe export data' });
+    }
+
+    const user = await ensureDefaultUser();
+
+    // Reset current user objects
+    await prisma.celestialObject.deleteMany({ where: { userId: user.id } });
+    await prisma.dailyMood.deleteMany({ where: { userId: user.id } });
+
+    for (const item of data.celestials) {
+      const { id, userId, createdAt, updatedAt, ...rest } = item;
+      await prisma.celestialObject.create({
+        data: {
+          ...rest,
+          userId: user.id
+        }
+      });
+    }
+
+    if (data.dailyMoods && Array.isArray(data.dailyMoods)) {
+      for (const moodItem of data.dailyMoods) {
+        const { id, userId, createdAt, ...restMood } = moodItem;
+        await prisma.dailyMood.create({
+          data: {
+            ...restMood,
+            userId: user.id
+          }
+        });
+      }
+    }
+
+    return res.json({ success: true, message: 'Universe successfully imported!' });
+  } catch (error) {
+    console.error('importUniverse Error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to import universe' });
   }
 };
