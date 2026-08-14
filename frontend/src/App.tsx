@@ -12,6 +12,11 @@ export default function App() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL');
   const [cosmicTheme, setCosmicTheme] = useState<'cyan' | 'violet' | 'solar' | 'cyberpunk'>('cyan');
   
+  // Big Bang Timeline Slider States
+  const [timelineValue, setTimelineValue] = useState<number>(100);
+  const [isPlayingTimeline, setIsPlayingTimeline] = useState<boolean>(false);
+  const timelineTimerRef = useRef<any>(null);
+
   // UI Modal & Side Drawer states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMoodModal, setShowMoodModal] = useState(false);
@@ -54,6 +59,27 @@ export default function App() {
       }
     } catch (e) {
       console.error('Fetch error:', e);
+    }
+  };
+
+  // Timeline Play / Pause Loop
+  const togglePlayTimeline = () => {
+    if (isPlayingTimeline) {
+      setIsPlayingTimeline(false);
+      if (timelineTimerRef.current) clearInterval(timelineTimerRef.current);
+    } else {
+      setIsPlayingTimeline(true);
+      setTimelineValue(0);
+      timelineTimerRef.current = setInterval(() => {
+        setTimelineValue((prev) => {
+          if (prev >= 100) {
+            clearInterval(timelineTimerRef.current);
+            setIsPlayingTimeline(false);
+            return 100;
+          }
+          return prev + 2;
+        });
+      }, 100);
     }
   };
 
@@ -105,7 +131,7 @@ export default function App() {
     }
   };
 
-  // Canvas Render Engine Loop with Raycaster Object Clicking
+  // Canvas Render Engine Loop with Raycaster & Timeline Growth
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -121,7 +147,6 @@ export default function App() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Mouse click raycaster for side drawer selection
     const handleCanvasClick = (e: MouseEvent) => {
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
@@ -176,7 +201,7 @@ export default function App() {
         ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 8]);
         ctx.beginPath();
-        ctx.arc(0, 0, orbitRadii[i], 0, Math.PI * 2);
+        ctx.arc(0, 0, orbitRadii[i] * (timelineValue / 100), 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
       }
@@ -205,15 +230,19 @@ export default function App() {
       ctx.textAlign = 'center';
       ctx.fillText(`🌍 ${user?.name || 'Sen'} (Ana Gezegen)`, 0, r + 24);
 
-      // Filtered Celestial Objects Render
-      const filteredList = celestials.filter(obj => {
+      // Filtered & Timeline-Bounded Celestial Objects Render
+      const maxAllowedIndex = Math.floor((celestials.length * timelineValue) / 100);
+      const timelineFilteredList = celestials.slice(0, Math.max(1, maxAllowedIndex));
+
+      const filteredList = timelineFilteredList.filter(obj => {
         const matchesCategory = activeCategoryFilter === 'ALL' || obj.category === activeCategoryFilter;
         const matchesSearch = !searchQuery || obj.title.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
       });
 
       filteredList.forEach((obj) => {
-        const radius = orbitRadii[obj.orbit] || 300;
+        const baseRadius = orbitRadii[obj.orbit] || 300;
+        const radius = baseRadius * (timelineValue / 100);
         const currentAngle = obj.angle + (time * 0.0001 * (5 - obj.orbit));
         const px = Math.cos(currentAngle) * radius;
         const py = Math.sin(currentAngle) * radius;
@@ -287,7 +316,7 @@ export default function App() {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [celestials, user, searchQuery, activeCategoryFilter, cosmicTheme, selectedObject]);
+  }, [celestials, user, searchQuery, activeCategoryFilter, cosmicTheme, selectedObject, timelineValue]);
 
   const handleAddObject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -378,13 +407,13 @@ export default function App() {
         <div className="brand">
           <div className="logo-icon">🌌</div>
           <div>
-            <h1>My Little Universe <span className="badge">Sci-Fi UI</span></h1>
+            <h1>My Little Universe <span className="badge">Timeline Engine</span></h1>
             <p className="subtitle">"Your life, your little universe."</p>
           </div>
         </div>
 
         {/* Search Bar */}
-        <div style={{ position: 'relative', width: '220px' }}>
+        <div style={{ position: 'relative', width: '200px' }}>
           <input
             type="text"
             placeholder="🔍 Gezegen / Anı Ara..."
@@ -441,6 +470,29 @@ export default function App() {
         ))}
       </div>
 
+      {/* Big Bang Timeline Slider Bar (Bottom Center) */}
+      <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10,16,38,0.85)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.15)', padding: '12px 24px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '16px', zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.6)', minWidth: '460px' }}>
+        <button onClick={togglePlayTimeline} className="btn btn-primary" style={{ padding: '8px 14px', borderRadius: '12px' }}>
+          {isPlayingTimeline ? '⏸️ Durdur' : '▶️ Big Bang İle Büyüt'}
+        </button>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+            <span>🌱 İlk Gün (Big Bang)</span>
+            <span style={{ color: '#00f3ff' }}>%{timelineValue} Genişleme</span>
+            <span>✨ Bugün</span>
+          </div>
+          <input
+            type="range"
+            min="5"
+            max="100"
+            value={timelineValue}
+            onChange={(e) => setTimelineValue(Number(e.target.value))}
+            style={{ width: '100%', cursor: 'pointer', accentColor: '#00f3ff' }}
+          />
+        </div>
+      </div>
+
       {/* Futuristic Glassmorphism Side Drawer Inspector */}
       {selectedObject && (
         <div style={{ position: 'absolute', top: 0, right: 0, width: '420px', height: '100vh', background: 'rgba(10, 16, 42, 0.85)', backdropFilter: 'blur(20px)', borderLeft: '1px solid rgba(255, 255, 255, 0.15)', boxShadow: '-10px 0 40px rgba(0,0,0,0.7)', zIndex: 60, padding: '30px', display: 'flex', flexDirection: 'column', transition: 'all 0.4s ease-out' }}>
@@ -451,7 +503,6 @@ export default function App() {
             <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
           </div>
 
-          {/* Polaroid Photo Frame if photo attached */}
           {selectedObject.imageUrl ? (
             <div style={{ background: '#fff', padding: '12px 12px 24px 12px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', transform: 'rotate(-2deg)', marginBottom: '20px' }}>
               <img src={selectedObject.imageUrl} alt={selectedObject.title} style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '8px' }} />
