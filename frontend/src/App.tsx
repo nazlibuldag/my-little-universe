@@ -68,6 +68,25 @@ export default function App() {
     }
   };
 
+  // Keyboard Arrow Navigation for Photo Lightbox & Gallery
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedObject) return;
+      const photoList = getPhotoList(selectedObject.imageUrl);
+      if (photoList.length <= 1) return;
+
+      if (e.key === 'ArrowRight') {
+        setActivePhotoIndex(prev => (prev + 1) % photoList.length);
+      } else if (e.key === 'ArrowLeft') {
+        setActivePhotoIndex(prev => (prev - 1 + photoList.length) % photoList.length);
+      } else if (e.key === 'Escape') {
+        setLightboxPhoto(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedObject]);
+
   // Real Multi-File Local Upload Handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -163,7 +182,7 @@ export default function App() {
     }
   };
 
-  // Canvas Render Engine with Exact Animated Collision Tracking!
+  // Canvas Render Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -179,7 +198,6 @@ export default function App() {
     resize();
     window.addEventListener('resize', resize);
 
-    // 100% Precise Raycaster Click Detection for ALL Orbits!
     const handleCanvasClick = (e: MouseEvent) => {
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
@@ -205,7 +223,6 @@ export default function App() {
     const render = (time: number) => {
       camera.current.zoom += (camera.current.targetZoom - camera.current.zoom) * 0.1;
 
-      // Soft Holographic Background
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       grad.addColorStop(0, '#fff0f5');
       grad.addColorStop(0.35, '#f3e8ff');
@@ -220,7 +237,6 @@ export default function App() {
       ctx.translate(cx + camera.current.x, cy + camera.current.y);
       ctx.scale(camera.current.zoom, camera.current.zoom);
 
-      // Elegant Orbit Rings
       const colors = ['', 'rgba(255, 183, 197, 0.55)', 'rgba(216, 180, 254, 0.55)', 'rgba(255, 209, 220, 0.55)', 'rgba(186, 230, 253, 0.55)'];
       for (let i = 1; i < orbitRadii.length; i++) {
         ctx.strokeStyle = colors[i];
@@ -232,7 +248,7 @@ export default function App() {
         ctx.setLineDash([]);
       }
 
-      // Core Planet (Nzlbl / Sen)
+      // Core Planet
       const pulse = Math.sin(time * 0.003) * 3;
       const r = 38 + pulse;
 
@@ -244,7 +260,6 @@ export default function App() {
       ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Saturn Ring
       ctx.save();
       ctx.rotate(Math.PI / 6);
       ctx.strokeStyle = 'rgba(255, 183, 197, 0.8)';
@@ -268,7 +283,6 @@ export default function App() {
       ctx.textAlign = 'center';
       ctx.fillText(`🌸 ${user?.name || 'Nzlbl'} (Ana Gezegen)`, 0, r + 28);
 
-      // Render Objects & Save Real-Time Animated Positions for Raycaster!
       const maxAllowedIndex = Math.floor((celestials.length * timelineValue) / 100);
       const timelineFilteredList = celestials.slice(0, Math.max(1, maxAllowedIndex));
 
@@ -285,7 +299,6 @@ export default function App() {
         const px = Math.cos(currentAngle) * radius;
         const py = Math.sin(currentAngle) * radius;
 
-        // Save position to ref map for exact click collision!
         planetPositionsRef.current[obj.id] = { px, py };
 
         const isSelected = selectedObject?.id === obj.id;
@@ -379,7 +392,6 @@ export default function App() {
       if (category === 'Hobby') orbit = 2;
       if (category === 'Memory') orbit = 3;
 
-      // Join multiple uploaded photo URLs as JSON string
       const imageUrl = uploadedPhotos.length > 0 ? JSON.stringify(uploadedPhotos) : '';
       const res = await fetch('/api/celestials', {
         method: 'POST',
@@ -453,7 +465,6 @@ export default function App() {
     setTimeout(() => setMagicToast(null), 3500);
   };
 
-  // Helper to parse multiple photos array safely
   const getPhotoList = (imgStr?: string): string[] => {
     if (!imgStr) return [];
     try {
@@ -498,7 +509,7 @@ export default function App() {
         {[
           { id: 'ALL', label: '🌌 Tümü' },
           { id: 'Goal', label: '🚀 Hayaller' },
-          { id: 'Memory', label: '⭐ Anılar' },
+          { id: 'Memory', label: '⭐ Anırlar' },
           { id: 'Person', label: '💗 İnsanlar' },
           { id: 'Hobby', label: '✨ Hobiler' },
           { id: 'Moon', label: '🌙 Uydular' }
@@ -535,26 +546,46 @@ export default function App() {
               <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
             </div>
 
-            {/* Pinterest Multi-Photo Polaroid Carousel */}
+            {/* Pinterest Multi-Photo Polaroid Gallery Carousel */}
             {photoList.length > 0 ? (
               <div style={{ position: 'relative', marginBottom: '20px' }}>
-                <div style={{ background: '#fff', padding: '14px 14px 26px 14px', borderRadius: '22px', boxShadow: '0 12px 35px rgba(216,180,254,0.3)', transform: 'rotate(-2deg)', border: '1.5px solid rgba(255,255,255,0.9)', cursor: 'pointer' }} onClick={() => setLightboxPhoto(photoList[activePhotoIndex])}>
-                  <img src={photoList[activePhotoIndex]} alt={selectedObject.title} style={{ width: '100%', height: '230px', objectFit: 'cover', borderRadius: '14px' }} />
+                <div style={{ background: '#fff', padding: '14px 14px 26px 14px', borderRadius: '22px', boxShadow: '0 12px 35px rgba(216,180,254,0.3)', transform: 'rotate(-2deg)', border: '1.5px solid rgba(255,255,255,0.9)', position: 'relative' }}>
+                  <img src={photoList[activePhotoIndex]} alt={selectedObject.title} onClick={() => setLightboxPhoto(photoList[activePhotoIndex])} style={{ width: '100%', height: '230px', objectFit: 'cover', borderRadius: '14px', cursor: 'zoom-in' }} />
+                  
+                  {/* Photo Navigation Arrow Buttons OVER Polaroid Image */}
+                  {photoList.length > 1 && (
+                    <>
+                      <button className="photo-nav-btn" style={{ left: '10px' }} onClick={(e) => { e.stopPropagation(); setActivePhotoIndex((activePhotoIndex - 1 + photoList.length) % photoList.length); }}>‹</button>
+                      <button className="photo-nav-btn" style={{ right: '10px' }} onClick={(e) => { e.stopPropagation(); setActivePhotoIndex((activePhotoIndex + 1) % photoList.length); }}>›</button>
+                    </>
+                  )}
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', padding: '0 4px' }}>
                     <p style={{ color: '#2d1836', fontSize: '0.95rem', fontWeight: 700, fontFamily: '"Playfair Display"' }}>{selectedObject.title}</p>
-                    <span style={{ fontSize: '0.75rem', color: '#6b4d75', fontWeight: 600 }}>📷 {activePhotoIndex + 1} / {photoList.length}</span>
+                    <span style={{ fontSize: '0.78rem', color: '#6b4d75', fontWeight: 700 }}>📷 {activePhotoIndex + 1} / {photoList.length}</span>
                   </div>
                 </div>
 
-                {/* Photo Carousel Navigation Arrows if > 1 photo */}
+                {/* Photo Thumbnail Strip */}
                 {photoList.length > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
-                    {photoList.map((_, idx) => (
-                      <span
+                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginTop: '12px', paddingBottom: '6px' }}>
+                    {photoList.map((url, idx) => (
+                      <div
                         key={idx}
                         onClick={() => setActivePhotoIndex(idx)}
-                        style={{ width: '10px', height: '10px', borderRadius: '50%', background: activePhotoIndex === idx ? '#ff85a1' : 'rgba(107, 77, 117, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
-                      />
+                        style={{
+                          width: '54px',
+                          height: '54px',
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          border: activePhotoIndex === idx ? '2px solid #ff85a1' : '1.5px solid rgba(255,255,255,0.8)',
+                          cursor: 'pointer',
+                          opacity: activePhotoIndex === idx ? 1 : 0.6,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <img src={url} alt="thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
                     ))}
                   </div>
                 )}
@@ -579,7 +610,7 @@ export default function App() {
                     ✨ PLANET DISCOVERED! (Keşfedildi)
                   </div>
                 ) : (
-                  <button onClick={() => handleCompleteGoal(selectedObject.id)} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '14px' }}>
+                  <button onClick={() => handleCompleteGoal(selectedObject.id)} className="btn-action-primary" style={{ width: '100%', justifyContent: 'center' }}>
                     <i className="fa-solid fa-wand-magic-sparkles"></i> PLANET DISCOVERED! 🎉
                   </button>
                 )}
@@ -595,11 +626,15 @@ export default function App() {
         );
       })()}
 
-      {/* Fullscreen Lightbox Modal when Polaroid Photo is clicked */}
+      {/* Fullscreen Photo Lightbox Modal with Arrows */}
       {lightboxPhoto && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(45,24,54,0.85)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 120 }} onClick={() => setLightboxPhoto(null)}>
-          <div style={{ background: '#fff', padding: '18px 18px 36px 18px', borderRadius: '28px', maxWidth: '80vw', maxHeight: '85vh', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', textAlign: 'center' }}>
-            <img src={lightboxPhoto} alt="lightbox" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '18px', objectFit: 'contain' }} />
+          <div style={{ background: '#fff', padding: '18px 18px 36px 18px', borderRadius: '28px', maxWidth: '85vw', maxHeight: '88vh', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', textAlign: 'center', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxPhoto} alt="lightbox" style={{ maxWidth: '100%', maxHeight: '72vh', borderRadius: '18px', objectFit: 'contain' }} />
+            
+            {/* Close Button */}
+            <button onClick={() => setLightboxPhoto(null)} style={{ position: 'absolute', top: '-15px', right: '-15px', background: '#ff85a1', border: '2px solid #fff', color: '#fff', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', fontWeight: 800, fontSize: '1.1rem' }}>✕</button>
+
             <p style={{ marginTop: '14px', fontFamily: '"Playfair Display"', fontSize: '1.2rem', color: '#2d1836', fontWeight: 700 }}>Tam Boyut Anı Fotoğrafı ✨</p>
           </div>
         </div>
@@ -613,10 +648,10 @@ export default function App() {
         </div>
       )}
 
-      {/* Add Modal with Real Multi-File Local Upload */}
+      {/* Add Modal with Beautiful Styled Action Buttons */}
       {showAddModal && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '30px', borderRadius: '32px', width: '100%', maxWidth: '480px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '490px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
             <h2 style={{ fontFamily: '"Playfair Display"', marginBottom: '16px', color: '#2d1836' }}>Evrene Yeni Varlık Ekle 🌸</h2>
             <form onSubmit={handleAddObject}>
               <div style={{ marginBottom: '12px' }}>
@@ -646,7 +681,7 @@ export default function App() {
               </div>
 
               {/* Real Multi-File Local Uploader */}
-              <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '22px' }}>
                 <label style={{ display: 'block', marginBottom: '6px', color: '#6b4d75', fontWeight: 600 }}>Bilgisayardan Fotoğraf Yükle 📸</label>
                 <div className="upload-dropzone" onClick={() => fileInputRef.current?.click()}>
                   <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.8rem', color: '#ff85a1', marginBottom: '8px' }}></i>
@@ -664,11 +699,11 @@ export default function App() {
                   />
                 </div>
 
-                {/* Uploaded Photos Preview Grid with Real URLs */}
+                {/* Uploaded Photos Preview Strip */}
                 {uploadedPhotos.length > 0 && (
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
                     {uploadedPhotos.map((url, idx) => (
-                      <div key={idx} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid #ffb7c5', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+                      <div key={idx} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '14px', overflow: 'hidden', border: '2px solid #ffb7c5', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
                         <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     ))}
@@ -676,9 +711,10 @@ export default function App() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn" style={{ background: '#f3e8ff', color: '#2d1836' }} onClick={() => setShowAddModal(false)}>İptal</button>
-                <button type="submit" className="btn btn-primary">Evrene Yolla 🚀</button>
+              {/* GORGEOUS HIGH-END ACTION BUTTONS! */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button type="button" className="btn-action-cancel" onClick={() => setShowAddModal(false)}>İptal</button>
+                <button type="submit" className="btn-action-primary">🚀 Evrene Yolla</button>
               </div>
             </form>
           </div>
@@ -697,9 +733,9 @@ export default function App() {
               ))}
             </div>
             <input type="text" value={moodNote} onChange={e => setMoodNote(e.target.value)} placeholder="Güne dair not..." style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#fff0f5', color: '#2d1836', border: '1.5px solid rgba(255,183,197,0.6)', marginBottom: '20px', fontWeight: 600 }} />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button type="button" className="btn" style={{ background: '#f3e8ff', color: '#2d1836' }} onClick={() => setShowMoodModal(false)}>İptal</button>
-              <button type="button" className="btn btn-mood" onClick={handleSaveMood}>Yıldızı Oluştur ⭐</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button type="button" className="btn-action-cancel" onClick={() => setShowMoodModal(false)}>İptal</button>
+              <button type="button" className="btn-action-primary" onClick={handleSaveMood}>Yıldızı Oluştur ⭐</button>
             </div>
           </div>
         </div>
