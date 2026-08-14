@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CelestialObject, DailyMood, UserProfile, Achievement } from './types/galaxy';
+import { CelestialObject, DailyMood, UserProfile, Achievement, Habit, JournalEntry } from './types/galaxy';
 import { Camera } from './canvas/Camera';
 import { ParticleSystem } from './canvas/ParticleSystem';
 
@@ -15,6 +15,8 @@ export default function App() {
   const [celestials, setCelestials] = useState<CelestialObject[]>([]);
   const [dailyMoods, setDailyMoods] = useState<DailyMood[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   
   // UI & Filter & Theme States
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +32,8 @@ export default function App() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMoodModal, setShowMoodModal] = useState(false);
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
+  const [showHabitsModal, setShowHabitsModal] = useState(false);
+  const [showJournalModal, setShowJournalModal] = useState(false);
   const [selectedObject, setSelectedObject] = useState<CelestialObject | null>(null);
   const [magicToast, setMagicToast] = useState<{ title: string; message: string } | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -47,6 +51,11 @@ export default function App() {
   const [selectedMood, setSelectedMood] = useState('Great');
   const [moodNote, setMoodNote] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Habit & Journal Form States
+  const [habitTitle, setHabitTitle] = useState('');
+  const [journalTitle, setJournalTitle] = useState('');
+  const [journalContent, setJournalContent] = useState('');
 
   // Voice Memory Recorder States
   const [isRecording, setIsRecording] = useState(false);
@@ -255,7 +264,6 @@ export default function App() {
     const render = (time: number) => {
       cameraRef.current.update();
 
-      // Theme Gradient Engine
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       if (activeTheme === 'Deep Space') {
         grad.addColorStop(0, '#0d0714');
@@ -270,7 +278,6 @@ export default function App() {
         grad.addColorStop(0.5, '#0b3526');
         grad.addColorStop(1, '#020d09');
       } else {
-        // Soft Holographic Pink Dream
         grad.addColorStop(0, '#fff0f5');
         grad.addColorStop(0.35, '#f3e8ff');
         grad.addColorStop(0.7, '#e0e7ff');
@@ -363,11 +370,8 @@ export default function App() {
           ctx.stroke();
         }
 
-        // Planet Growth Stages Rendering (0% -> 25% -> 50% -> 75% -> 100%)
         if (obj.category === 'Goal' && !obj.isCompleted) {
           const prog = obj.progress || 0;
-          
-          // Outer Glow based on progress %
           if (prog >= 50) {
             const gAura = ctx.createRadialGradient(0, 0, 10, 0, 0, 32);
             gAura.addColorStop(0, 'rgba(255, 183, 197, 0.4)');
@@ -434,7 +438,6 @@ export default function App() {
         ctx.restore();
       });
 
-      // Particle System Rendering
       particleSystemRef.current.updateAndRender(ctx);
 
       ctx.restore();
@@ -480,6 +483,55 @@ export default function App() {
     }
   };
 
+  const handleAddHabit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!habitTitle) return;
+    const newHabit: Habit = {
+      id: String(Date.now()),
+      userId: user?.id || '1',
+      title: habitTitle,
+      frequency: 'daily',
+      streak: 1,
+      longestStreak: 1,
+      createdAt: new Date().toISOString()
+    };
+    setHabits([...habits, newHabit]);
+    setHabitTitle('');
+    playSoundEffect(880, 'sine');
+    showToast('🔥 YENİ ALIŞKANLIK EKLENDİ!', `"${newHabit.title}" için ilk streak günü başlatıldı!`);
+  };
+
+  const handleCheckinHabit = (id: string) => {
+    setHabits(habits.map(h => {
+      if (h.id === id) {
+        const newStreak = h.streak + 1;
+        playSoundEffect(1046.5, 'triangle');
+        showToast('🔥 STREAK ARTTI!', `"${h.title}" için ${newStreak} günlük seri tamamlandı!`);
+        return { ...h, streak: newStreak, longestStreak: Math.max(h.longestStreak, newStreak) };
+      }
+      return h;
+    }));
+  };
+
+  const handleAddJournal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!journalTitle || !journalContent) return;
+    const newEntry: JournalEntry = {
+      id: String(Date.now()),
+      userId: user?.id || '1',
+      title: journalTitle,
+      content: journalContent,
+      mood: selectedMood,
+      createdAt: new Date().toISOString()
+    };
+    setJournalEntries([...journalEntries, newEntry]);
+    setJournalTitle('');
+    setJournalContent('');
+    setShowJournalModal(false);
+    playSoundEffect(783.99, 'sine');
+    showToast('📔 DİJİTAL GÜNLÜK KAYDEDİLDİ!', `"${newEntry.title}" evren kapsülüne eklendi.`);
+  };
+
   const handleUpdateProgress = async (id: string, newProg: number) => {
     try {
       const res = await fetch(`/api/celestials/${id}/progress`, {
@@ -493,7 +545,6 @@ export default function App() {
         setSelectedObject(data.data);
 
         if (newProg >= 100) {
-          // Trigger Particle Shower & Celebration
           const pos = planetPositionsRef.current[id];
           if (pos) {
             particleSystemRef.current.spawnConfetti(pos.px, pos.py, 80);
@@ -599,7 +650,6 @@ export default function App() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         
-        {/* Theme Switcher Selector */}
         <select
           value={activeTheme}
           onChange={(e) => setActiveTheme(e.target.value)}
@@ -610,6 +660,18 @@ export default function App() {
           <option value="Sunset Universe">🌅 Sunset Universe</option>
           <option value="Nature Galaxy">🌿 Nature Galaxy</option>
         </select>
+
+        <button className="btn-action-cancel" onClick={() => setShowAchievementsModal(true)} style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
+          🏆 Rozetler
+        </button>
+
+        <button className="btn-action-cancel" onClick={() => setShowHabitsModal(true)} style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
+          🔥 Alışkanlıklar
+        </button>
+
+        <button className="btn-action-cancel" onClick={() => setShowJournalModal(true)} style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
+          📔 Günlük
+        </button>
 
         <button className="btn-action-cancel" onClick={handleExportUniverse} style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
           💾 Export
@@ -662,7 +724,6 @@ export default function App() {
               <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
             </div>
 
-            {/* Multi-Photo Polaroid Carousel */}
             {photoList.length > 0 ? (
               <div style={{ position: 'relative', marginBottom: '20px' }}>
                 <div style={{ background: '#fff', padding: '14px 14px 26px 14px', borderRadius: '22px', boxShadow: '0 12px 35px rgba(216,180,254,0.3)', transform: 'rotate(-2deg)', border: '1.5px solid rgba(255,255,255,0.9)', position: 'relative' }}>
@@ -690,7 +751,6 @@ export default function App() {
             <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: '"Playfair Display"', marginBottom: '6px', color: '#2d1836' }}>{selectedObject.title}</h2>
             <p style={{ fontSize: '0.85rem', color: '#6b4d75', marginBottom: '16px', fontWeight: 500 }}><i className="fa-regular fa-calendar"></i> {new Date(selectedObject.createdAt).toLocaleDateString('tr-TR')}</p>
             
-            {/* Interactive Goal Progress Slider System (0% -> 100%) */}
             {selectedObject.category === 'Goal' && (
               <div style={{ background: 'rgba(255, 255, 255, 0.85)', padding: '18px', borderRadius: '20px', border: '1.5px solid rgba(255, 255, 255, 0.9)', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -709,7 +769,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Voice Memory Player */}
             {selectedObject.audioUrl && (
               <div style={{ background: 'rgba(255, 255, 255, 0.85)', padding: '16px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.9)', marginBottom: '20px' }}>
                 <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2d1836', marginBottom: '8px' }}>🎤 Ses Kaydı Anısı</p>
@@ -729,6 +788,100 @@ export default function App() {
           </div>
         );
       })()}
+
+      {/* Achievements Modal */}
+      {showAchievementsModal && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '480px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontFamily: '"Playfair Display"', color: '#2d1836' }}>🏆 Başarılar & Rozetler</h2>
+              <button onClick={() => setShowAchievementsModal(false)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto' }}>
+              {[
+                { icon: '✨', title: '🌌 Evren Doğdu', desc: 'Kendi kişisel evrenini başarıyla oluşturdun!', status: 'KAZANILDI' },
+                { icon: '⭐', title: '⭐ İlk Anı Yıldızı', desc: 'Evrenine ilk fotoğraf anını kaydettin!', status: 'KAZANILDI' },
+                { icon: '🚀', title: '🚀 Hayalperest', desc: '10 keşfedilmeyi bekleyen hedef ekledin.', status: 'YOLDA (%60)' },
+                { icon: '🔥', title: '🔥 30-Gün Süpernova', desc: '30 gün üst üste mood yıldızı oluşturdun.', status: 'KİLİTLİ' }
+              ].map((ach, idx) => (
+                <div key={idx} style={{ background: '#fff0f5', padding: '14px 18px', borderRadius: '20px', border: '1.5px solid rgba(255,183,197,0.6)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <span style={{ fontSize: '2rem' }}>{ach.icon}</span>
+                  <div>
+                    <h4 style={{ color: '#2d1836', fontSize: '1rem', fontWeight: 700 }}>{ach.title}</h4>
+                    <p style={{ color: '#6b4d75', fontSize: '0.82rem' }}>{ach.desc}</p>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#ff85a1', marginTop: '4px', display: 'inline-block' }}>{ach.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Habits Modal */}
+      {showHabitsModal && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '480px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontFamily: '"Playfair Display"', color: '#2d1836' }}>🔥 Alışkanlık & Streak Takibi</h2>
+              <button onClick={() => setShowHabitsModal(false)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+            </div>
+            
+            <form onSubmit={handleAddHabit} style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+              <input type="text" value={habitTitle} onChange={e => setHabitTitle(e.target.value)} placeholder="Yeni alışkanlık (Örn: Su İçmek)" required style={{ flex: 1, padding: '10px 14px', borderRadius: '16px', border: '1.5px solid #ffb7c5', background: '#fff0f5' }} />
+              <button type="submit" className="btn-action-primary" style={{ padding: '10px 16px' }}>Ekle</button>
+            </form>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '50vh', overflowY: 'auto' }}>
+              {habits.map(h => (
+                <div key={h.id} style={{ background: '#fff', padding: '14px', borderRadius: '18px', border: '1.5px solid #ffb7c5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h4 style={{ color: '#2d1836', fontWeight: 700 }}>{h.title}</h4>
+                    <span style={{ fontSize: '0.8rem', color: '#ff85a1', fontWeight: 800 }}>🔥 {h.streak} Gün Streak</span>
+                  </div>
+                  <button className="btn-action-primary" onClick={() => handleCheckinHabit(h.id)} style={{ padding: '8px 14px', fontSize: '0.8rem' }}>
+                    ✅ Tamamla
+                  </button>
+                </div>
+              ))}
+              {habits.length === 0 && <p style={{ color: '#6b4d75', fontSize: '0.85rem', textStyle: 'italic' }}>Henüz takip edilen alışkanlık yok. Yukarıdan ekleyin!</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Journal Modal */}
+      {showJournalModal && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '490px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontFamily: '"Playfair Display"', color: '#2d1836' }}>📔 Dijital Günlük Kapsülü</h2>
+              <button onClick={() => setShowJournalModal(false)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+            </div>
+            
+            <form onSubmit={handleAddJournal}>
+              <input type="text" value={journalTitle} onChange={e => setJournalTitle(e.target.value)} placeholder="Günlük Başlığı..." required style={{ width: '100%', padding: '10px 14px', borderRadius: '16px', border: '1.5px solid #ffb7c5', background: '#fff0f5', marginBottom: '10px' }} />
+              <textarea value={journalContent} onChange={e => setJournalContent(e.target.value)} placeholder="Bugüne dair düşüncelerin..." required style={{ width: '100%', height: '100px', padding: '10px 14px', borderRadius: '16px', border: '1.5px solid #ffb7c5', background: '#fff0f5', marginBottom: '16px' }} />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button type="button" className="btn-action-cancel" onClick={() => setShowJournalModal(false)}>İptal</button>
+                <button type="submit" className="btn-action-primary">Kapsüle Kaydet 📔</button>
+              </div>
+            </form>
+
+            {journalEntries.length > 0 && (
+              <div style={{ marginTop: '20px', borderTop: '1px solid #ffb7c5', paddingTop: '14px' }}>
+                <h4 style={{ color: '#2d1836', fontSize: '0.9rem', marginBottom: '8px' }}>Geçmiş Günlük Yazıları</h4>
+                {journalEntries.map(j => (
+                  <div key={j.id} style={{ background: '#fff', padding: '10px 14px', borderRadius: '14px', border: '1px solid #ffb7c5', marginBottom: '8px' }}>
+                    <p style={{ fontWeight: 700, color: '#2d1836', fontSize: '0.88rem' }}>{j.title}</p>
+                    <p style={{ fontSize: '0.8rem', color: '#6b4d75' }}>{j.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Fullscreen Photo Lightbox Modal */}
       {showLightbox && selectedObject && (() => {
@@ -766,7 +919,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Add Modal with Voice Memory Recorder */}
+      {/* Add Modal */}
       {showAddModal && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '490px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)', maxHeight: '90vh', overflowY: 'auto' }}>
