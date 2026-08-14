@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CelestialObject, DailyMood, UserProfile, Achievement, Habit, JournalEntry } from './types/galaxy';
+import { CelestialObject, DailyMood, UserProfile, Achievement, Habit, JournalEntry, Location } from './types/galaxy';
 import { Camera } from './canvas/Camera';
 import { ParticleSystem } from './canvas/ParticleSystem';
+import { ConstellationRenderer } from './canvas/ConstellationRenderer';
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -10,6 +11,7 @@ export default function App() {
   // Core Engine Controllers
   const cameraRef = useRef<Camera>(new Camera());
   const particleSystemRef = useRef<ParticleSystem>(new ParticleSystem());
+  const constellationRendererRef = useRef<ConstellationRenderer>(new ConstellationRenderer());
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [celestials, setCelestials] = useState<CelestialObject[]>([]);
@@ -17,11 +19,18 @@ export default function App() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [habits, setHabits] = useState<Habit[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [locations, setLocations] = useState<Location[]>([
+    { id: '1', userId: '1', name: '📍 Kyoto, Japonya Tatili', latitude: 35.0116, longitude: 135.7681, date: '2026-04-12', description: 'Kiraz çiçekleri altında çay seremonisi 🌸', createdAt: new Date().toISOString() },
+    { id: '2', userId: '2', name: '📍 Üniversite Kampüsü', latitude: 41.0082, longitude: 28.9784, date: '2024-09-01', description: 'Geleceğin adımlarının atıldığı yer 🎓', createdAt: new Date().toISOString() }
+  ]);
   
-  // UI & Filter & Theme States
+  // UI & Filter & Theme & Special Mode States
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL');
   const [activeTheme, setActiveTheme] = useState<string>('Pink Dream');
+  const [isFutureUniverseMode, setIsFutureUniverseMode] = useState<boolean>(false);
+  const [hoveredObjectId, setHoveredObjectId] = useState<string | null>(null);
+  const [centerClickCount, setCenterClickCount] = useState<number>(0);
   
   // Big Bang Timeline Slider States
   const [timelineValue, setTimelineValue] = useState<number>(100);
@@ -34,6 +43,7 @@ export default function App() {
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [showHabitsModal, setShowHabitsModal] = useState(false);
   const [showJournalModal, setShowJournalModal] = useState(false);
+  const [showLocationsModal, setShowLocationsModal] = useState(false);
   const [selectedObject, setSelectedObject] = useState<CelestialObject | null>(null);
   const [magicToast, setMagicToast] = useState<{ title: string; message: string } | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -52,10 +62,12 @@ export default function App() {
   const [moodNote, setMoodNote] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Habit & Journal Form States
+  // Habit, Journal & Location Form States
   const [habitTitle, setHabitTitle] = useState('');
   const [journalTitle, setJournalTitle] = useState('');
   const [journalContent, setJournalContent] = useState('');
+  const [locationName, setLocationName] = useState('');
+  const [locationDesc, setLocationDesc] = useState('');
 
   // Voice Memory Recorder States
   const [isRecording, setIsRecording] = useState(false);
@@ -92,7 +104,7 @@ export default function App() {
     }
   };
 
-  // Keyboard Arrow Navigation for Photo Lightbox & Gallery
+  // Keyboard Navigation for Photo Lightbox
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedObject) return;
@@ -240,6 +252,20 @@ export default function App() {
       const worldX = (e.clientX - cx - cameraRef.current.x) / cameraRef.current.zoom;
       const worldY = (e.clientY - cy - cameraRef.current.y) / cameraRef.current.zoom;
 
+      // Secret Easter Egg Trigger: Click Center Nzlbl Planet
+      const centerDist = Math.hypot(worldX, worldY);
+      if (centerDist <= 45) {
+        const nextCount = centerClickCount + 1;
+        setCenterClickCount(nextCount);
+        playSoundEffect(880 + nextCount * 100, 'sine');
+        if (nextCount >= 5) {
+          particleSystemRef.current.spawnConfetti(0, 0, 120);
+          showToast('🌟 GİZLİ SÜPERNOVA KEŞFEDİLDİ!', 'Ana gezegene 5 kez tıklayarak kozmik sürprizi tetikledin! ✨');
+          setCenterClickCount(0);
+        }
+        return;
+      }
+
       for (let obj of celestials) {
         const pos = planetPositionsRef.current[obj.id];
         if (!pos) continue;
@@ -254,11 +280,31 @@ export default function App() {
       }
     };
 
+    const handleMouseMove = (e: MouseEvent) => {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const worldX = (e.clientX - cx - cameraRef.current.x) / cameraRef.current.zoom;
+      const worldY = (e.clientY - cy - cameraRef.current.y) / cameraRef.current.zoom;
+
+      let found: string | null = null;
+      for (let obj of celestials) {
+        const pos = planetPositionsRef.current[obj.id];
+        if (!pos) continue;
+        const dist = Math.hypot(worldX - pos.px, worldY - pos.py);
+        if (dist <= 35) {
+          found = obj.id;
+          break;
+        }
+      }
+      setHoveredObjectId(found);
+    };
+
     const handleWheel = (e: WheelEvent) => {
       cameraRef.current.handleWheel(e);
     };
 
     canvas.addEventListener('click', handleCanvasClick);
+    canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
 
     const render = (time: number) => {
@@ -347,6 +393,9 @@ export default function App() {
         return matchesCategory && matchesSearch;
       });
 
+      // Render Life Web Glowing Constellation Connection Lines!
+      constellationRendererRef.current.renderLifeWeb(ctx, filteredList, planetPositionsRef.current, hoveredObjectId);
+
       filteredList.forEach((obj) => {
         const baseRadius = orbitRadii[obj.orbit] || 300;
         const radius = baseRadius * (timelineValue / 100);
@@ -370,7 +419,16 @@ export default function App() {
           ctx.stroke();
         }
 
-        if (obj.category === 'Goal' && !obj.isCompleted) {
+        // Future Universe (2030 Mode) Projection Rings
+        if (isFutureUniverseMode && obj.category === 'Goal') {
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 32, 10, Math.PI / 4, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        if (obj.category === 'Goal' && !obj.isCompleted && !isFutureUniverseMode) {
           const prog = obj.progress || 0;
           if (prog >= 50) {
             const gAura = ctx.createRadialGradient(0, 0, 10, 0, 0, 32);
@@ -447,11 +505,12 @@ export default function App() {
     animationFrameId = requestAnimationFrame(render);
     return () => {
       canvas.removeEventListener('click', handleCanvasClick);
+      canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('wheel', handleWheel);
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [celestials, user, searchQuery, activeCategoryFilter, selectedObject, timelineValue, activeTheme]);
+  }, [celestials, user, searchQuery, activeCategoryFilter, selectedObject, timelineValue, activeTheme, isFutureUniverseMode, hoveredObjectId, centerClickCount]);
 
   const handleAddObject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -530,6 +589,26 @@ export default function App() {
     setShowJournalModal(false);
     playSoundEffect(783.99, 'sine');
     showToast('📔 DİJİTAL GÜNLÜK KAYDEDİLDİ!', `"${newEntry.title}" evren kapsülüne eklendi.`);
+  };
+
+  const handleAddLocation = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!locationName) return;
+    const newLoc: Location = {
+      id: String(Date.now()),
+      userId: user?.id || '1',
+      name: locationName,
+      latitude: 41.0082,
+      longitude: 28.9784,
+      date: new Date().toISOString().split('T')[0],
+      description: locationDesc,
+      createdAt: new Date().toISOString()
+    };
+    setLocations([...locations, newLoc]);
+    setLocationName('');
+    setLocationDesc('');
+    playSoundEffect(659.25, 'triangle');
+    showToast('📍 YER HARİTASINA EKLENDİ!', `"${newLoc.name}" haritana kaydedildi.`);
   };
 
   const handleUpdateProgress = async (id: string, newProg: number) => {
@@ -661,6 +740,14 @@ export default function App() {
           <option value="Nature Galaxy">🌿 Nature Galaxy</option>
         </select>
 
+        <button className={`btn-action-cancel ${isFutureUniverseMode ? 'btn-action-primary' : ''}`} onClick={() => setIsFutureUniverseMode(!isFutureUniverseMode)} style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
+          🔮 2030 Gelecek Evren
+        </button>
+
+        <button className="btn-action-cancel" onClick={() => setShowLocationsModal(true)} style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
+          📍 Gezilen Yerler
+        </button>
+
         <button className="btn-action-cancel" onClick={() => setShowAchievementsModal(true)} style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
           🏆 Rozetler
         </button>
@@ -788,6 +875,33 @@ export default function App() {
           </div>
         );
       })()}
+
+      {/* Locations / Gezilen Yerler Modal */}
+      {showLocationsModal && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '490px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontFamily: '"Playfair Display"', color: '#2d1836' }}>📍 Gezilen Yerler Haritası</h2>
+              <button onClick={() => setShowLocationsModal(false)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+            </div>
+
+            <form onSubmit={handleAddLocation} style={{ marginBottom: '20px' }}>
+              <input type="text" value={locationName} onChange={e => setLocationName(e.target.value)} placeholder="Yer adı (Örn: 📍 Kadıköy Sahil)" required style={{ width: '100%', padding: '10px 14px', borderRadius: '16px', border: '1.5px solid #ffb7c5', background: '#fff0f5', marginBottom: '8px' }} />
+              <input type="text" value={locationDesc} onChange={e => setLocationDesc(e.target.value)} placeholder="Not / Detay..." style={{ width: '100%', padding: '10px 14px', borderRadius: '16px', border: '1.5px solid #ffb7c5', background: '#fff0f5', marginBottom: '10px' }} />
+              <button type="submit" className="btn-action-primary" style={{ width: '100%', justifyContent: 'center' }}>Haritaya Ekle 📍</button>
+            </form>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '45vh', overflowY: 'auto' }}>
+              {locations.map(loc => (
+                <div key={loc.id} style={{ background: '#fff', padding: '14px', borderRadius: '18px', border: '1.5px solid #ffb7c5' }}>
+                  <h4 style={{ color: '#2d1836', fontWeight: 700, fontSize: '0.95rem' }}>{loc.name}</h4>
+                  <p style={{ color: '#6b4d75', fontSize: '0.82rem', marginTop: '4px' }}>{loc.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Achievements Modal */}
       {showAchievementsModal && (
