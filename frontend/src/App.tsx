@@ -10,7 +10,6 @@ export default function App() {
   // UI & Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL');
-  const [cosmicTheme, setCosmicTheme] = useState<'cyan' | 'violet' | 'solar' | 'cyberpunk'>('cyan');
   
   // Big Bang Timeline Slider States
   const [timelineValue, setTimelineValue] = useState<number>(100);
@@ -29,14 +28,14 @@ export default function App() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [skin, setSkin] = useState('saturn');
+  const [skin, setSkin] = useState('pink');
   const [selectedMood, setSelectedMood] = useState('Great');
   const [moodNote, setMoodNote] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Camera state
+  // Camera state & Generous Spaced Orbit Radii
   const camera = useRef({ x: 0, y: 0, zoom: 1, targetZoom: 1, isDragging: false, dragStart: { x: 0, y: 0 } });
-  const orbitRadii = [0, 160, 310, 470, 640];
+  const orbitRadii = [0, 220, 390, 570, 760]; // Generous spacing so planets never overlap!
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
@@ -131,7 +130,7 @@ export default function App() {
     }
   };
 
-  // Canvas Render Engine Loop with Raycaster & Timeline Growth
+  // Canvas Render Engine Loop with Dreamy Pink & Lavender Aesthetics
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -173,18 +172,14 @@ export default function App() {
     const render = (time: number) => {
       camera.current.zoom += (camera.current.targetZoom - camera.current.zoom) * 0.1;
 
-      let bg1 = '#090e2d', bg2 = '#040718', bg3 = '#020309';
-      if (cosmicTheme === 'violet') { bg1 = '#1c0a35'; bg2 = '#0b041a'; bg3 = '#04010a'; }
-      if (cosmicTheme === 'solar') { bg1 = '#301c08'; bg2 = '#140a02'; bg3 = '#080301'; }
-      if (cosmicTheme === 'cyberpunk') { bg1 = '#30081a'; bg2 = '#14020a'; bg3 = '#080104'; }
-
+      // Dreamy Lavender Space Gradient Background
       const grad = ctx.createRadialGradient(
         canvas.width / 2, canvas.height / 2, 50,
         canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height)
       );
-      grad.addColorStop(0, bg1);
-      grad.addColorStop(0.5, bg2);
-      grad.addColorStop(1, bg3);
+      grad.addColorStop(0, '#24143d');
+      grad.addColorStop(0.5, '#130a24');
+      grad.addColorStop(1, '#090314');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -194,32 +189,51 @@ export default function App() {
       ctx.translate(cx + camera.current.x, cy + camera.current.y);
       ctx.scale(camera.current.zoom, camera.current.zoom);
 
-      // Orbit Rings
-      const colors = ['', 'rgba(255,117,160,0.25)', 'rgba(157,78,221,0.25)', 'rgba(255,215,0,0.25)', 'rgba(0,243,255,0.25)'];
+      // Dreamy Pink & Lavender Orbit Rings
+      const colors = [
+        '',
+        'rgba(255, 133, 161, 0.35)', // Orbit 1: People (Pink)
+        'rgba(200, 182, 255, 0.35)', // Orbit 2: Hobbies (Lilac)
+        'rgba(255, 229, 236, 0.35)', // Orbit 3: Memories (Rose Starlight)
+        'rgba(184, 192, 255, 0.35)'  // Orbit 4: Goals (Lavender)
+      ];
+
       for (let i = 1; i < orbitRadii.length; i++) {
         ctx.strokeStyle = colors[i];
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([6, 8]);
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([8, 10]);
         ctx.beginPath();
         ctx.arc(0, 0, orbitRadii[i] * (timelineValue / 100), 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
       }
 
-      // Core Planet
+      // Core Planet (Sen / Nzlbl) - Dreamy Pink Aura Sphere
       const pulse = Math.sin(time * 0.003) * 3;
-      const r = 34 + pulse;
-      const aura = ctx.createRadialGradient(0, 0, r * 0.8, 0, 0, r * 2.2);
-      aura.addColorStop(0, 'rgba(0, 243, 255, 0.5)');
-      aura.addColorStop(1, 'rgba(0, 243, 255, 0)');
+      const r = 36 + pulse;
+
+      const aura = ctx.createRadialGradient(0, 0, r * 0.8, 0, 0, r * 2.5);
+      aura.addColorStop(0, 'rgba(255, 133, 161, 0.6)');
+      aura.addColorStop(1, 'rgba(255, 133, 161, 0)');
       ctx.fillStyle = aura;
       ctx.beginPath();
-      ctx.arc(0, 0, r * 2.2, 0, Math.PI * 2);
+      ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
       ctx.fill();
 
-      const planetGrad = ctx.createRadialGradient(-8, -8, 2, 0, 0, r);
-      planetGrad.addColorStop(0, '#00f3ff');
-      planetGrad.addColorStop(1, '#03045e');
+      // Planet Saturn Ring
+      ctx.save();
+      ctx.rotate(Math.PI / 5);
+      ctx.strokeStyle = 'rgba(231, 198, 255, 0.7)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 1.9, r * 0.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      const planetGrad = ctx.createRadialGradient(-10, -10, 2, 0, 0, r);
+      planetGrad.addColorStop(0, '#ff85a1');
+      planetGrad.addColorStop(0.6, '#c8b6ff');
+      planetGrad.addColorStop(1, '#4a154b');
       ctx.fillStyle = planetGrad;
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
@@ -228,9 +242,9 @@ export default function App() {
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 13px Outfit';
       ctx.textAlign = 'center';
-      ctx.fillText(`🌍 ${user?.name || 'Sen'} (Ana Gezegen)`, 0, r + 24);
+      ctx.fillText(`🌍 ${user?.name || 'Nzlbl'} (Ana Gezegen)`, 0, r + 26);
 
-      // Filtered & Timeline-Bounded Celestial Objects Render
+      // Celestial Objects Render
       const maxAllowedIndex = Math.floor((celestials.length * timelineValue) / 100);
       const timelineFilteredList = celestials.slice(0, Math.max(1, maxAllowedIndex));
 
@@ -254,41 +268,55 @@ export default function App() {
         ctx.translate(px, py);
 
         if (isSelected || isSearchMatch) {
-          ctx.strokeStyle = isSelected ? '#ff007f' : '#ffd700';
+          ctx.strokeStyle = isSelected ? '#ff75a0' : '#ffe5ec';
           ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.arc(0, 0, 32, 0, Math.PI * 2);
+          ctx.arc(0, 0, 34, 0, Math.PI * 2);
           ctx.stroke();
         }
 
         if (obj.category === 'Goal' && !obj.isCompleted) {
-          ctx.fillStyle = 'rgba(20,25,45,0.9)';
-          ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+          // Locked Planet
+          ctx.fillStyle = 'rgba(40, 20, 60, 0.9)';
+          ctx.strokeStyle = 'rgba(231, 198, 255, 0.4)';
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.arc(0, 0, 20, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
 
-          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
           ctx.font = '12px FontAwesome';
           ctx.textAlign = 'center';
           ctx.fillText('🔒', 0, 4);
         } else {
-          const pAura = ctx.createRadialGradient(0, 0, 10, 0, 0, 35);
-          pAura.addColorStop(0, 'rgba(0,243,255,0.4)');
+          // Active Glowing Pink / Lavender Planet
+          const pAura = ctx.createRadialGradient(0, 0, 10, 0, 0, 36);
+          pAura.addColorStop(0, 'rgba(255, 133, 161, 0.5)');
           pAura.addColorStop(1, 'rgba(0,0,0,0)');
           ctx.fillStyle = pAura;
           ctx.beginPath();
-          ctx.arc(0, 0, 35, 0, Math.PI * 2);
+          ctx.arc(0, 0, 36, 0, Math.PI * 2);
           ctx.fill();
 
-          const pGrad = ctx.createRadialGradient(-6, -6, 2, 0, 0, 18);
-          pGrad.addColorStop(0, obj.category === 'Person' ? '#ff75a0' : '#00f3ff');
-          pGrad.addColorStop(1, obj.category === 'Person' ? '#ff007f' : '#7b2cbf');
+          const pGrad = ctx.createRadialGradient(-6, -6, 2, 0, 0, 20);
+          if (obj.category === 'Person') {
+            pGrad.addColorStop(0, '#ff85a1');
+            pGrad.addColorStop(1, '#f72585');
+          } else if (obj.category === 'Hobby') {
+            pGrad.addColorStop(0, '#e7c6ff');
+            pGrad.addColorStop(1, '#7b2cbf');
+          } else if (obj.category === 'Memory') {
+            pGrad.addColorStop(0, '#ffe5ec');
+            pGrad.addColorStop(1, '#ff75a0');
+          } else {
+            pGrad.addColorStop(0, '#c8b6ff');
+            pGrad.addColorStop(1, '#3a0ca3');
+          }
+
           ctx.fillStyle = pGrad;
           ctx.beginPath();
-          ctx.arc(0, 0, 18, 0, Math.PI * 2);
+          ctx.arc(0, 0, 20, 0, Math.PI * 2);
           ctx.fill();
         }
 
@@ -298,10 +326,10 @@ export default function App() {
         if (obj.category === 'Person') icon = '💗';
         if (obj.category === 'Moon') icon = '🌙';
 
-        ctx.fillStyle = isSelected ? '#ff75a0' : (isSearchMatch ? '#ffd700' : '#ffffff');
-        ctx.font = isSelected ? '700 13px Outfit' : '500 11px Outfit';
+        ctx.fillStyle = isSelected ? '#ff75a0' : (isSearchMatch ? '#ffe5ec' : '#ffffff');
+        ctx.font = isSelected ? '700 13px Outfit' : '600 11px Outfit';
         ctx.textAlign = 'center';
-        ctx.fillText(`${icon} ${obj.title}`, 0, 28);
+        ctx.fillText(`${icon} ${obj.title}`, 0, 30);
 
         ctx.restore();
       });
@@ -316,7 +344,7 @@ export default function App() {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [celestials, user, searchQuery, activeCategoryFilter, cosmicTheme, selectedObject, timelineValue]);
+  }, [celestials, user, searchQuery, activeCategoryFilter, selectedObject, timelineValue]);
 
   const handleAddObject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -402,43 +430,36 @@ export default function App() {
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
 
-      {/* Header HUD */}
+      {/* Dreamy Header HUD */}
       <header className="hud-header">
         <div className="brand">
           <div className="logo-icon">🌌</div>
           <div>
-            <h1>My Little Universe <span className="badge">Timeline Engine</span></h1>
+            <h1>My Little Universe <span className="badge">Dreamy Lavender</span></h1>
             <p className="subtitle">"Your life, your little universe."</p>
           </div>
         </div>
 
         {/* Search Bar */}
-        <div style={{ position: 'relative', width: '200px' }}>
+        <div style={{ position: 'relative', width: '220px' }}>
           <input
             type="text"
-            placeholder="🔍 Gezegen / Anı Ara..."
+            placeholder="🌸 Gezegen / Anı Ara..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ width: '100%', padding: '8px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: '0.85rem' }}
+            style={{ width: '100%', padding: '10px 16px', borderRadius: '16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(231,198,255,0.25)', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
           />
         </div>
 
         {/* Stats Pills */}
         <div className="stats-bar">
-          <div className="stat-pill"><i className="fa-solid fa-rocket color-cyan"></i> <span><strong>{celestials.filter(c => c.category === 'Goal').length}</strong> Hayal</span></div>
-          <div className="stat-pill"><i className="fa-solid fa-star color-gold"></i> <span><strong>{celestials.filter(c => c.category === 'Memory').length}</strong> Anı</span></div>
-          <div className="stat-pill"><i className="fa-solid fa-heart color-pink"></i> <span><strong>{celestials.filter(c => c.category === 'Person').length}</strong> Gezegen</span></div>
-          <div className="stat-pill"><i className="fa-solid fa-palette color-purple"></i> <span><strong>{celestials.filter(c => c.category === 'Hobby').length}</strong> Hobi</span></div>
+          <div className="stat-pill"><i className="fa-solid fa-rocket" style={{ color: '#ff85a1' }}></i> <span><strong>{celestials.filter(c => c.category === 'Goal').length}</strong> Hayal</span></div>
+          <div className="stat-pill"><i className="fa-solid fa-star" style={{ color: '#ffe5ec' }}></i> <span><strong>{celestials.filter(c => c.category === 'Memory').length}</strong> Anı</span></div>
+          <div className="stat-pill"><i className="fa-solid fa-heart" style={{ color: '#f72585' }}></i> <span><strong>{celestials.filter(c => c.category === 'Person').length}</strong> Gezegen</span></div>
+          <div className="stat-pill"><i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#c8b6ff' }}></i> <span><strong>{celestials.filter(c => c.category === 'Hobby').length}</strong> Hobi</span></div>
         </div>
 
         <div className="header-actions">
-          <select value={cosmicTheme} onChange={(e: any) => setCosmicTheme(e.target.value)} style={{ padding: '8px 12px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}>
-            <option value="cyan">🌌 Deep Space</option>
-            <option value="violet">🔮 Nebula Violet</option>
-            <option value="solar">☀️ Solar Gold</option>
-            <option value="cyberpunk">💖 Cyberpunk Pink</option>
-          </select>
-
           <button className={`btn ${soundEnabled ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSoundEnabled(!soundEnabled)}>
             <i className={`fa-solid ${soundEnabled ? 'fa-volume-high' : 'fa-volume-xmark'}`}></i> {soundEnabled ? 'Ses Açık 🎵' : 'Ses Kapalı 🔇'}
           </button>
@@ -448,21 +469,22 @@ export default function App() {
       </header>
 
       {/* Category Filter Bar */}
-      <div style={{ position: 'absolute', top: '90px', left: '20px', display: 'flex', gap: '8px', zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: '96px', left: '20px', display: 'flex', gap: '8px', zIndex: 10 }}>
         {['ALL', 'Goal', 'Memory', 'Person', 'Hobby', 'Moon'].map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategoryFilter(cat)}
             style={{
-              padding: '6px 12px',
-              borderRadius: '12px',
-              border: '1px solid rgba(255,255,255,0.15)',
-              background: activeCategoryFilter === cat ? 'linear-gradient(135deg, #00f3ff, #7b2cbf)' : 'rgba(10,16,38,0.7)',
-              color: '#fff',
-              fontSize: '0.78rem',
-              fontWeight: 600,
+              padding: '8px 16px',
+              borderRadius: '16px',
+              border: '1px solid rgba(231, 198, 255, 0.25)',
+              background: activeCategoryFilter === cat ? 'linear-gradient(135deg, #ff85a1, #c8b6ff)' : 'rgba(26, 14, 46, 0.75)',
+              color: activeCategoryFilter === cat ? '#1a0e2e' : '#fff',
+              fontSize: '0.82rem',
+              fontWeight: 700,
               cursor: 'pointer',
-              backdropFilter: 'blur(10px)'
+              backdropFilter: 'blur(12px)',
+              boxShadow: activeCategoryFilter === cat ? '0 4px 15px rgba(255, 133, 161, 0.3)' : 'none'
             }}
           >
             {cat === 'ALL' ? '🌌 Tümü' : cat === 'Goal' ? '🚀 Hayaller' : cat === 'Memory' ? '⭐ Anılar' : cat === 'Person' ? '💗 İnsanlar' : cat === 'Hobby' ? '✨ Hobiler' : '🌙 Uydular'}
@@ -471,15 +493,15 @@ export default function App() {
       </div>
 
       {/* Big Bang Timeline Slider Bar (Bottom Center) */}
-      <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(10,16,38,0.85)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.15)', padding: '12px 24px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '16px', zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.6)', minWidth: '460px' }}>
-        <button onClick={togglePlayTimeline} className="btn btn-primary" style={{ padding: '8px 14px', borderRadius: '12px' }}>
+      <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(26, 14, 46, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(231,198,255,0.25)', padding: '14px 28px', borderRadius: '28px', display: 'flex', alignItems: 'center', gap: '18px', zIndex: 10, boxShadow: '0 12px 40px rgba(0,0,0,0.6)', minWidth: '480px' }}>
+        <button onClick={togglePlayTimeline} className="btn btn-primary" style={{ padding: '8px 16px', borderRadius: '14px' }}>
           {isPlayingTimeline ? '⏸️ Durdur' : '▶️ Big Bang İle Büyüt'}
         </button>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
-            <span>🌱 İlk Gün (Big Bang)</span>
-            <span style={{ color: '#00f3ff' }}>%{timelineValue} Genişleme</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'rgba(231,198,255,0.8)', fontWeight: 600 }}>
+            <span>🌱 İlk Gün</span>
+            <span style={{ color: '#ff85a1' }}>%{timelineValue} Genişleme</span>
             <span>✨ Bugün</span>
           </div>
           <input
@@ -488,16 +510,16 @@ export default function App() {
             max="100"
             value={timelineValue}
             onChange={(e) => setTimelineValue(Number(e.target.value))}
-            style={{ width: '100%', cursor: 'pointer', accentColor: '#00f3ff' }}
+            style={{ width: '100%', cursor: 'pointer', accentColor: '#ff85a1' }}
           />
         </div>
       </div>
 
       {/* Futuristic Glassmorphism Side Drawer Inspector */}
       {selectedObject && (
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '420px', height: '100vh', background: 'rgba(10, 16, 42, 0.85)', backdropFilter: 'blur(20px)', borderLeft: '1px solid rgba(255, 255, 255, 0.15)', boxShadow: '-10px 0 40px rgba(0,0,0,0.7)', zIndex: 60, padding: '30px', display: 'flex', flexDirection: 'column', transition: 'all 0.4s ease-out' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '420px', height: '100vh', background: 'rgba(20, 10, 38, 0.9)', backdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(231, 198, 255, 0.25)', boxShadow: '-10px 0 50px rgba(0,0,0,0.8)', zIndex: 60, padding: '30px', display: 'flex', flexDirection: 'column', transition: 'all 0.4s ease-out' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '4px 12px', borderRadius: '20px', background: 'rgba(0,243,255,0.15)', color: '#00f3ff', border: '1px solid rgba(0,243,255,0.3)', letterSpacing: '1px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '4px 12px', borderRadius: '20px', background: 'rgba(255,133,161,0.2)', color: '#ff85a1', border: '1px solid rgba(255,133,161,0.4)', letterSpacing: '1px' }}>
               {selectedObject.category.toUpperCase()}
             </span>
             <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer' }}>✕</button>
@@ -509,15 +531,15 @@ export default function App() {
               <p style={{ color: '#222', fontSize: '0.85rem', fontWeight: 700, fontFamily: 'Outfit', textAlign: 'center', marginTop: '10px' }}>{selectedObject.title}</p>
             </div>
           ) : (
-            <div style={{ fontSize: '4.5rem', textAlign: 'center', margin: '20px 0', filter: 'drop-shadow(0 0 20px rgba(0,243,255,0.5))' }}>
+            <div style={{ fontSize: '4.5rem', textAlign: 'center', margin: '20px 0', filter: 'drop-shadow(0 0 20px rgba(255,133,161,0.6))' }}>
               {selectedObject.category === 'Memory' ? '⭐' : selectedObject.category === 'Person' ? '💗' : selectedObject.category === 'Hobby' ? '✨' : '🪐'}
             </div>
           )}
 
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '6px' }}>{selectedObject.title}</h2>
-          <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginBottom: '16px' }}><i className="fa-regular fa-calendar"></i> {new Date(selectedObject.createdAt).toLocaleDateString('tr-TR')}</p>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '6px', color: '#ffffff' }}>{selectedObject.title}</h2>
+          <p style={{ fontSize: '0.8rem', color: 'rgba(231,198,255,0.6)', marginBottom: '16px' }}><i className="fa-regular fa-calendar"></i> {new Date(selectedObject.createdAt).toLocaleDateString('tr-TR')}</p>
           
-          <div style={{ background: 'rgba(255,255,255,0.05)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '20px', lineHeight: 1.6, fontSize: '0.92rem', color: 'rgba(255,255,255,0.85)' }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(231,198,255,0.15)', marginBottom: '20px', lineHeight: 1.6, fontSize: '0.92rem', color: 'rgba(255,255,255,0.9)' }}>
             {selectedObject.description || 'Bu varlık için herhangi bir detay girilmemiş.'}
           </div>
 
@@ -528,7 +550,7 @@ export default function App() {
                   ✨ PLANET DISCOVERED! (Keşfedildi)
                 </div>
               ) : (
-                <button onClick={() => handleCompleteGoal(selectedObject.id)} className="btn btn-success" style={{ width: '100%', justifyContent: 'center', padding: '14px' }}>
+                <button onClick={() => handleCompleteGoal(selectedObject.id)} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '14px' }}>
                   <i className="fa-solid fa-wand-magic-sparkles"></i> PLANET DISCOVERED! 🎉
                 </button>
               )}
@@ -545,21 +567,21 @@ export default function App() {
 
       {/* Magic Event Toast */}
       {magicToast && (
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'radial-gradient(circle, #0e1430 0%, #030511 100%)', border: '2px solid #ffd700', padding: '30px 50px', borderRadius: '30px', textAlign: 'center', zIndex: 100, boxShadow: '0 0 50px rgba(255,215,0,0.6)' }}>
-          <h2 style={{ background: 'linear-gradient(135deg, #ffd700, #ff75a0, #00f3ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2rem', marginBottom: '10px' }}>{magicToast.title}</h2>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'radial-gradient(circle, #24143d 0%, #090314 100%)', border: '2px solid #ff85a1', padding: '30px 50px', borderRadius: '30px', textAlign: 'center', zIndex: 100, boxShadow: '0 0 50px rgba(255,133,161,0.6)' }}>
+          <h2 style={{ background: 'linear-gradient(135deg, #ff85a1, #c8b6ff, #ffe5ec)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2rem', marginBottom: '10px' }}>{magicToast.title}</h2>
           <p style={{ color: '#fff' }}>{magicToast.message}</p>
         </div>
       )}
 
       {/* Add Modal */}
       {showAddModal && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,5,17,0.75)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: '#0e1430', border: '1px solid rgba(255,255,255,0.15)', padding: '28px', borderRadius: '24px', width: '100%', maxWidth: '460px' }}>
-            <h2 style={{ marginBottom: '16px' }}>Evrene Yeni Varlık Ekle 🌌</h2>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,4,23,0.8)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: '#1c0c36', border: '1px solid rgba(231,198,255,0.25)', padding: '28px', borderRadius: '24px', width: '100%', maxWidth: '460px' }}>
+            <h2 style={{ marginBottom: '16px', color: '#fff' }}>Evrene Yeni Varlık Ekle 🌌</h2>
             <form onSubmit={handleAddObject}>
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', marginBottom: '6px' }}>Tür</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#182046', color: '#fff', border: '1px solid #334' }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: 'rgba(231,198,255,0.8)' }}>Tür</label>
+                <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '12px', background: '#28144b', color: '#fff', border: '1px solid rgba(231,198,255,0.2)' }}>
                   <option value="Goal">🚀 Keşfedilmemiş Hayal / Hedef</option>
                   <option value="Memory">⭐ Anı Yıldızı</option>
                   <option value="Person">💗 Önemli İnsan</option>
@@ -569,27 +591,27 @@ export default function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', marginBottom: '6px' }}>Başlık</label>
-                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Örn: Japonya Tatili" required style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#182046', color: '#fff', border: '1px solid #334' }} />
+                <label style={{ display: 'block', marginBottom: '6px', color: 'rgba(231,198,255,0.8)' }}>Başlık</label>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Örn: Japonya Tatili" required style={{ width: '100%', padding: '10px', borderRadius: '12px', background: '#28144b', color: '#fff', border: '1px solid rgba(231,198,255,0.2)' }} />
               </div>
 
               <div style={{ marginBottom: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label>Açıklama / Hikaye</label>
-                  <button type="button" onClick={handleAIAnalyze} disabled={isAnalyzing} style={{ background: 'rgba(0,243,255,0.15)', color: '#00f3ff', border: '1px solid #00f3ff', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', cursor: 'pointer' }}>
+                  <label style={{ color: 'rgba(231,198,255,0.8)' }}>Açıklama / Hikaye</label>
+                  <button type="button" onClick={handleAIAnalyze} disabled={isAnalyzing} style={{ background: 'rgba(255,133,161,0.2)', color: '#ff85a1', border: '1px solid #ff85a1', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', cursor: 'pointer' }}>
                     {isAnalyzing ? 'Analiz ediliyor...' : '✨ AI Otomatik Analiz Et'}
                   </button>
                 </div>
-                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Açıklama veya detay..." style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#182046', color: '#fff', border: '1px solid #334' }} />
+                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Açıklama veya detay..." style={{ width: '100%', padding: '10px', borderRadius: '12px', background: '#28144b', color: '#fff', border: '1px solid rgba(231,198,255,0.2)' }} />
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '6px' }}>Fotoğraf URL (İsteğe Bağlı)</label>
-                <input type="text" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#182046', color: '#fff', border: '1px solid #334' }} />
+                <label style={{ display: 'block', marginBottom: '6px', color: 'rgba(231,198,255,0.8)' }}>Fotoğraf URL (İsteğe Bağlı)</label>
+                <input type="text" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." style={{ width: '100%', padding: '10px', borderRadius: '12px', background: '#28144b', color: '#fff', border: '1px solid rgba(231,198,255,0.2)' }} />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn" style={{ background: '#334' }} onClick={() => setShowAddModal(false)}>İptal</button>
+                <button type="button" className="btn" style={{ background: '#28144b' }} onClick={() => setShowAddModal(false)}>İptal</button>
                 <button type="submit" className="btn btn-primary">Evrene Yolla 🚀</button>
               </div>
             </form>
@@ -599,18 +621,18 @@ export default function App() {
 
       {/* Mood Modal */}
       {showMoodModal && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,5,17,0.75)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: '#0e1430', border: '1px solid rgba(255,215,0,0.3)', padding: '28px', borderRadius: '24px', width: '100%', maxWidth: '420px', textAlign: 'center' }}>
-            <h2 style={{ marginBottom: '12px' }}>Günün Yıldızı 🌙</h2>
-            <p style={{ marginBottom: '16px', color: '#ccc' }}>Günün nasıl geçti?</p>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,4,23,0.8)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: '#1c0c36', border: '1px solid rgba(200,182,255,0.3)', padding: '28px', borderRadius: '24px', width: '100%', maxWidth: '420px', textAlign: 'center' }}>
+            <h2 style={{ marginBottom: '12px', color: '#fff' }}>Günün Yıldızı 🌙</h2>
+            <p style={{ marginBottom: '16px', color: 'rgba(231,198,255,0.8)' }}>Günün nasıl geçti?</p>
             <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: '2rem', marginBottom: '20px', cursor: 'pointer' }}>
               {['😊', '🙂', '😐', '😔', '😭'].map((emo, idx) => (
-                <span key={idx} onClick={() => setSelectedMood(['Great','Good','Okay','NotGreat','Terrible'][idx])} style={{ padding: '6px', borderRadius: '12px', background: selectedMood === ['Great','Good','Okay','NotGreat','Terrible'][idx] ? 'rgba(255,215,0,0.25)' : 'transparent' }}>{emo}</span>
+                <span key={idx} onClick={() => setSelectedMood(['Great','Good','Okay','NotGreat','Terrible'][idx])} style={{ padding: '6px', borderRadius: '12px', background: selectedMood === ['Great','Good','Okay','NotGreat','Terrible'][idx] ? 'rgba(255,133,161,0.25)' : 'transparent' }}>{emo}</span>
               ))}
             </div>
-            <input type="text" value={moodNote} onChange={e => setMoodNote(e.target.value)} placeholder="Güne dair not..." style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#182046', color: '#fff', border: '1px solid #334', marginBottom: '20px' }} />
+            <input type="text" value={moodNote} onChange={e => setMoodNote(e.target.value)} placeholder="Güne dair not..." style={{ width: '100%', padding: '10px', borderRadius: '12px', background: '#28144b', color: '#fff', border: '1px solid rgba(231,198,255,0.2)', marginBottom: '20px' }} />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button type="button" className="btn" style={{ background: '#334' }} onClick={() => setShowMoodModal(false)}>İptal</button>
+              <button type="button" className="btn" style={{ background: '#28144b' }} onClick={() => setShowMoodModal(false)}>İptal</button>
               <button type="button" className="btn btn-mood" onClick={handleSaveMood}>Yıldızı Oluştur ⭐</button>
             </div>
           </div>
