@@ -25,7 +25,7 @@ export default function App() {
   const [magicToast, setMagicToast] = useState<{ title: string; message: string } | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState<number>(0);
-  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const [showLightbox, setShowLightbox] = useState<boolean>(false);
 
   // Form & Local Upload states
   const [category, setCategory] = useState<string>('Goal');
@@ -80,7 +80,7 @@ export default function App() {
       } else if (e.key === 'ArrowLeft') {
         setActivePhotoIndex(prev => (prev - 1 + photoList.length) % photoList.length);
       } else if (e.key === 'Escape') {
-        setLightboxPhoto(null);
+        setShowLightbox(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -509,7 +509,7 @@ export default function App() {
         {[
           { id: 'ALL', label: '🌌 Tümü' },
           { id: 'Goal', label: '🚀 Hayaller' },
-          { id: 'Memory', label: '⭐ Anırlar' },
+          { id: 'Memory', label: '⭐ Anılar' },
           { id: 'Person', label: '💗 İnsanlar' },
           { id: 'Hobby', label: '✨ Hobiler' },
           { id: 'Moon', label: '🌙 Uydular' }
@@ -550,7 +550,7 @@ export default function App() {
             {photoList.length > 0 ? (
               <div style={{ position: 'relative', marginBottom: '20px' }}>
                 <div style={{ background: '#fff', padding: '14px 14px 26px 14px', borderRadius: '22px', boxShadow: '0 12px 35px rgba(216,180,254,0.3)', transform: 'rotate(-2deg)', border: '1.5px solid rgba(255,255,255,0.9)', position: 'relative' }}>
-                  <img src={photoList[activePhotoIndex]} alt={selectedObject.title} onClick={() => setLightboxPhoto(photoList[activePhotoIndex])} style={{ width: '100%', height: '230px', objectFit: 'cover', borderRadius: '14px', cursor: 'zoom-in' }} />
+                  <img src={photoList[activePhotoIndex]} alt={selectedObject.title} onClick={() => setShowLightbox(true)} style={{ width: '100%', height: '230px', objectFit: 'cover', borderRadius: '14px', cursor: 'zoom-in' }} />
                   
                   {/* Photo Navigation Arrow Buttons OVER Polaroid Image */}
                   {photoList.length > 1 && (
@@ -626,19 +626,49 @@ export default function App() {
         );
       })()}
 
-      {/* Fullscreen Photo Lightbox Modal with Arrows */}
-      {lightboxPhoto && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(45,24,54,0.85)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 120 }} onClick={() => setLightboxPhoto(null)}>
-          <div style={{ background: '#fff', padding: '18px 18px 36px 18px', borderRadius: '28px', maxWidth: '85vw', maxHeight: '88vh', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', textAlign: 'center', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-            <img src={lightboxPhoto} alt="lightbox" style={{ maxWidth: '100%', maxHeight: '72vh', borderRadius: '18px', objectFit: 'contain' }} />
-            
-            {/* Close Button */}
-            <button onClick={() => setLightboxPhoto(null)} style={{ position: 'absolute', top: '-15px', right: '-15px', background: '#ff85a1', border: '2px solid #fff', color: '#fff', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', fontWeight: 800, fontSize: '1.1rem' }}>✕</button>
+      {/* Fullscreen Photo Lightbox Modal WITH Full Photo Navigation Arrows! */}
+      {showLightbox && selectedObject && (() => {
+        const photoList = getPhotoList(selectedObject.imageUrl);
+        if (photoList.length === 0) return null;
 
-            <p style={{ marginTop: '14px', fontFamily: '"Playfair Display"', fontSize: '1.2rem', color: '#2d1836', fontWeight: 700 }}>Tam Boyut Anı Fotoğrafı ✨</p>
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(45,24,54,0.85)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 120 }} onClick={() => setShowLightbox(false)}>
+            <div style={{ background: '#fff', padding: '20px 20px 38px 20px', borderRadius: '32px', maxWidth: '88vw', maxHeight: '90vh', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', textAlign: 'center', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+              <img src={photoList[activePhotoIndex]} alt="lightbox" style={{ maxWidth: '100%', maxHeight: '72vh', borderRadius: '20px', objectFit: 'contain' }} />
+
+              {/* Fullscreen Navigation Left Arrow Button */}
+              {photoList.length > 1 && (
+                <button
+                  className="photo-nav-btn"
+                  style={{ left: '-24px', width: '48px', height: '48px', fontSize: '1.5rem' }}
+                  onClick={() => setActivePhotoIndex((activePhotoIndex - 1 + photoList.length) % photoList.length)}
+                >
+                  ‹
+                </button>
+              )}
+
+              {/* Fullscreen Navigation Right Arrow Button */}
+              {photoList.length > 1 && (
+                <button
+                  className="photo-nav-btn"
+                  style={{ right: '-24px', width: '48px', height: '48px', fontSize: '1.5rem' }}
+                  onClick={() => setActivePhotoIndex((activePhotoIndex + 1) % photoList.length)}
+                >
+                  ›
+                </button>
+              )}
+
+              {/* Close Button */}
+              <button onClick={() => setShowLightbox(false)} style={{ position: 'absolute', top: '-15px', right: '-15px', background: '#ff85a1', border: '2px solid #fff', color: '#fff', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', fontWeight: 800, fontSize: '1.1rem' }}>✕</button>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', padding: '0 10px' }}>
+                <p style={{ fontFamily: '"Playfair Display"', fontSize: '1.25rem', color: '#2d1836', fontWeight: 700 }}>{selectedObject.title}</p>
+                <span style={{ fontSize: '0.88rem', color: '#6b4d75', fontWeight: 700, background: 'rgba(255,183,197,0.3)', padding: '4px 14px', borderRadius: '20px' }}>📷 {activePhotoIndex + 1} / {photoList.length}</span>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Magic Event Toast */}
       {magicToast && (
@@ -648,7 +678,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Add Modal with Beautiful Styled Action Buttons */}
+      {/* Add Modal */}
       {showAddModal && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '32px', borderRadius: '32px', width: '100%', maxWidth: '490px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
@@ -711,7 +741,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* GORGEOUS HIGH-END ACTION BUTTONS! */}
+              {/* Action Buttons */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" className="btn-action-cancel" onClick={() => setShowAddModal(false)}>İptal</button>
                 <button type="submit" className="btn-action-primary">🚀 Evrene Yolla</button>
