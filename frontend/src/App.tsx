@@ -25,6 +25,7 @@ export default function App() {
   const [magicToast, setMagicToast] = useState<{ title: string; message: string } | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState<number>(0);
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
 
   // Form & Local Upload states
   const [category, setCategory] = useState<string>('Goal');
@@ -40,6 +41,9 @@ export default function App() {
   const camera = useRef({ x: 0, y: 0, zoom: 1, targetZoom: 1, isDragging: false, dragStart: { x: 0, y: 0 } });
   const orbitRadii = [0, 220, 390, 570, 760];
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Dynamic planet position tracker for 100% precise click collision raycasting!
+  const planetPositionsRef = useRef<Record<string, { px: number; py: number }>>({});
 
   useEffect(() => {
     fetchData();
@@ -159,7 +163,7 @@ export default function App() {
     }
   };
 
-  // Canvas Render Loop
+  // Canvas Render Engine with Exact Animated Collision Tracking!
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -175,6 +179,7 @@ export default function App() {
     resize();
     window.addEventListener('resize', resize);
 
+    // 100% Precise Raycaster Click Detection for ALL Orbits!
     const handleCanvasClick = (e: MouseEvent) => {
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
@@ -182,12 +187,10 @@ export default function App() {
       const worldY = (e.clientY - cy - camera.current.y) / camera.current.zoom;
 
       for (let obj of celestials) {
-        const radius = orbitRadii[obj.orbit] || 300;
-        const currentAngle = obj.angle;
-        const px = Math.cos(currentAngle) * radius;
-        const py = Math.sin(currentAngle) * radius;
+        const pos = planetPositionsRef.current[obj.id];
+        if (!pos) continue;
 
-        const dist = Math.hypot(worldX - px, worldY - py);
+        const dist = Math.hypot(worldX - pos.px, worldY - pos.py);
         if (dist <= 35) {
           setSelectedObject(obj);
           setActivePhotoIndex(0);
@@ -265,7 +268,7 @@ export default function App() {
       ctx.textAlign = 'center';
       ctx.fillText(`🌸 ${user?.name || 'Nzlbl'} (Ana Gezegen)`, 0, r + 28);
 
-      // Render Objects
+      // Render Objects & Save Real-Time Animated Positions for Raycaster!
       const maxAllowedIndex = Math.floor((celestials.length * timelineValue) / 100);
       const timelineFilteredList = celestials.slice(0, Math.max(1, maxAllowedIndex));
 
@@ -281,6 +284,9 @@ export default function App() {
         const currentAngle = obj.angle + (time * 0.0001 * (5 - obj.orbit));
         const px = Math.cos(currentAngle) * radius;
         const py = Math.sin(currentAngle) * radius;
+
+        // Save position to ref map for exact click collision!
+        planetPositionsRef.current[obj.id] = { px, py };
 
         const isSelected = selectedObject?.id === obj.id;
         const isSearchMatch = searchQuery && obj.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -373,7 +379,8 @@ export default function App() {
       if (category === 'Hobby') orbit = 2;
       if (category === 'Memory') orbit = 3;
 
-      const imageUrl = uploadedPhotos.length > 0 ? uploadedPhotos[0] : '';
+      // Join multiple uploaded photo URLs as JSON string
+      const imageUrl = uploadedPhotos.length > 0 ? JSON.stringify(uploadedPhotos) : '';
       const res = await fetch('/api/celestials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -446,6 +453,19 @@ export default function App() {
     setTimeout(() => setMagicToast(null), 3500);
   };
 
+  // Helper to parse multiple photos array safely
+  const getPhotoList = (imgStr?: string): string[] => {
+    if (!imgStr) return [];
+    try {
+      if (imgStr.startsWith('[')) {
+        return JSON.parse(imgStr);
+      }
+      return [imgStr];
+    } catch (e) {
+      return [imgStr];
+    }
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
@@ -473,7 +493,7 @@ export default function App() {
         </button>
       </div>
 
-      {/* Sleek Apple Glass Dock (Bottom Center) - NO TOP BAR! */}
+      {/* Sleek Apple Glass Dock (Bottom Center) */}
       <div className="apple-dock">
         {[
           { id: 'ALL', label: '🌌 Tümü' },
@@ -503,53 +523,84 @@ export default function App() {
         </button>
       </div>
 
-      {/* Side Drawer Inspector */}
-      {selectedObject && (
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '420px', height: '100vh', background: 'rgba(255, 245, 248, 0.92)', backdropFilter: 'blur(30px)', borderLeft: '1.5px solid rgba(255, 255, 255, 0.9)', boxShadow: '-10px 0 50px rgba(216,180,254,0.3)', zIndex: 60, padding: '32px', display: 'flex', flexDirection: 'column', transition: 'all 0.4s ease-out' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,183,197,0.3)', color: '#2d1836', border: '1px solid rgba(255,255,255,0.9)', letterSpacing: '1px' }}>
-              {selectedObject.category.toUpperCase()}
-            </span>
-            <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
-          </div>
-
-          {/* Photo Polaroid View */}
-          {selectedObject.imageUrl ? (
-            <div style={{ background: '#fff', padding: '14px 14px 26px 14px', borderRadius: '22px', boxShadow: '0 12px 35px rgba(216,180,254,0.3)', transform: 'rotate(-2deg)', marginBottom: '20px', border: '1.5px solid rgba(255,255,255,0.9)' }}>
-              <img src={selectedObject.imageUrl} alt={selectedObject.title} style={{ width: '100%', height: '230px', objectFit: 'cover', borderRadius: '14px' }} />
-              <p style={{ color: '#2d1836', fontSize: '0.95rem', fontWeight: 700, fontFamily: '"Playfair Display"', textAlign: 'center', marginTop: '12px' }}>{selectedObject.title}</p>
+      {/* Pinterest Polaroid Side Drawer Inspector */}
+      {selectedObject && (() => {
+        const photoList = getPhotoList(selectedObject.imageUrl);
+        return (
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '430px', height: '100vh', background: 'rgba(255, 245, 248, 0.94)', backdropFilter: 'blur(30px)', borderLeft: '1.5px solid rgba(255, 255, 255, 0.9)', boxShadow: '-10px 0 50px rgba(216,180,254,0.3)', zIndex: 60, padding: '32px', display: 'flex', flexDirection: 'column', transition: 'all 0.4s ease-out' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,183,197,0.3)', color: '#2d1836', border: '1px solid rgba(255,255,255,0.9)', letterSpacing: '1px' }}>
+                {selectedObject.category.toUpperCase()}
+              </span>
+              <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
             </div>
-          ) : (
-            <div style={{ fontSize: '4.5rem', textAlign: 'center', margin: '20px 0', filter: 'drop-shadow(0 4px 20px rgba(216,180,254,0.5))' }}>
-              {selectedObject.category === 'Memory' ? '⭐' : selectedObject.category === 'Person' ? '💗' : selectedObject.category === 'Hobby' ? '✨' : '🪐'}
-            </div>
-          )}
 
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: '"Playfair Display"', marginBottom: '6px', color: '#2d1836' }}>{selectedObject.title}</h2>
-          <p style={{ fontSize: '0.85rem', color: '#6b4d75', marginBottom: '16px', fontWeight: 500 }}><i className="fa-regular fa-calendar"></i> {new Date(selectedObject.createdAt).toLocaleDateString('tr-TR')}</p>
-          
-          <div style={{ background: 'rgba(255, 255, 255, 0.75)', padding: '18px', borderRadius: '20px', border: '1.5px solid rgba(255, 255, 255, 0.9)', marginBottom: '20px', lineHeight: 1.6, fontSize: '0.95rem', color: '#2d1836', fontWeight: 500 }}>
-            {selectedObject.description || 'Bu varlık için herhangi bir detay girilmemiş.'}
-          </div>
-
-          {selectedObject.category === 'Goal' && (
-            <div style={{ marginBottom: '20px' }}>
-              {selectedObject.isCompleted ? (
-                <div style={{ padding: '14px', background: 'rgba(255, 183, 197, 0.3)', border: '1.5px solid #ffb7c5', borderRadius: '20px', color: '#2d1836', fontWeight: 700, textAlign: 'center' }}>
-                  ✨ PLANET DISCOVERED! (Keşfedildi)
+            {/* Pinterest Multi-Photo Polaroid Carousel */}
+            {photoList.length > 0 ? (
+              <div style={{ position: 'relative', marginBottom: '20px' }}>
+                <div style={{ background: '#fff', padding: '14px 14px 26px 14px', borderRadius: '22px', boxShadow: '0 12px 35px rgba(216,180,254,0.3)', transform: 'rotate(-2deg)', border: '1.5px solid rgba(255,255,255,0.9)', cursor: 'pointer' }} onClick={() => setLightboxPhoto(photoList[activePhotoIndex])}>
+                  <img src={photoList[activePhotoIndex]} alt={selectedObject.title} style={{ width: '100%', height: '230px', objectFit: 'cover', borderRadius: '14px' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', padding: '0 4px' }}>
+                    <p style={{ color: '#2d1836', fontSize: '0.95rem', fontWeight: 700, fontFamily: '"Playfair Display"' }}>{selectedObject.title}</p>
+                    <span style={{ fontSize: '0.75rem', color: '#6b4d75', fontWeight: 600 }}>📷 {activePhotoIndex + 1} / {photoList.length}</span>
+                  </div>
                 </div>
-              ) : (
-                <button onClick={() => handleCompleteGoal(selectedObject.id)} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '14px' }}>
-                  <i className="fa-solid fa-wand-magic-sparkles"></i> PLANET DISCOVERED! 🎉
-                </button>
-              )}
-            </div>
-          )}
 
-          <div style={{ marginTop: 'auto', display: 'flex', gap: '10px' }}>
-            <button onClick={() => handleDeleteObject(selectedObject.id)} className="btn" style={{ background: 'rgba(255,133,161,0.2)', color: '#2d1836', border: '1.5px solid rgba(255,133,161,0.4)', width: '100%', justifyContent: 'center' }}>
-              <i className="fa-solid fa-trash"></i> Evrenden Sil
-            </button>
+                {/* Photo Carousel Navigation Arrows if > 1 photo */}
+                {photoList.length > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
+                    {photoList.map((_, idx) => (
+                      <span
+                        key={idx}
+                        onClick={() => setActivePhotoIndex(idx)}
+                        style={{ width: '10px', height: '10px', borderRadius: '50%', background: activePhotoIndex === idx ? '#ff85a1' : 'rgba(107, 77, 117, 0.3)', cursor: 'pointer', transition: 'all 0.2s' }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ fontSize: '4.5rem', textAlign: 'center', margin: '20px 0', filter: 'drop-shadow(0 4px 20px rgba(216,180,254,0.5))' }}>
+                {selectedObject.category === 'Memory' ? '⭐' : selectedObject.category === 'Person' ? '💗' : selectedObject.category === 'Hobby' ? '✨' : '🪐'}
+              </div>
+            )}
+
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: '"Playfair Display"', marginBottom: '6px', color: '#2d1836' }}>{selectedObject.title}</h2>
+            <p style={{ fontSize: '0.85rem', color: '#6b4d75', marginBottom: '16px', fontWeight: 500 }}><i className="fa-regular fa-calendar"></i> {new Date(selectedObject.createdAt).toLocaleDateString('tr-TR')}</p>
+            
+            <div style={{ background: 'rgba(255, 255, 255, 0.75)', padding: '18px', borderRadius: '20px', border: '1.5px solid rgba(255, 255, 255, 0.9)', marginBottom: '20px', lineHeight: 1.6, fontSize: '0.95rem', color: '#2d1836', fontWeight: 500 }}>
+              {selectedObject.description || 'Bu varlık için herhangi bir detay girilmemiş.'}
+            </div>
+
+            {selectedObject.category === 'Goal' && (
+              <div style={{ marginBottom: '20px' }}>
+                {selectedObject.isCompleted ? (
+                  <div style={{ padding: '14px', background: 'rgba(255, 183, 197, 0.3)', border: '1.5px solid #ffb7c5', borderRadius: '20px', color: '#2d1836', fontWeight: 700, textAlign: 'center' }}>
+                    ✨ PLANET DISCOVERED! (Keşfedildi)
+                  </div>
+                ) : (
+                  <button onClick={() => handleCompleteGoal(selectedObject.id)} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '14px' }}>
+                    <i className="fa-solid fa-wand-magic-sparkles"></i> PLANET DISCOVERED! 🎉
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div style={{ marginTop: 'auto', display: 'flex', gap: '10px' }}>
+              <button onClick={() => handleDeleteObject(selectedObject.id)} className="btn" style={{ background: 'rgba(255,133,161,0.2)', color: '#2d1836', border: '1.5px solid rgba(255,133,161,0.4)', width: '100%', justifyContent: 'center' }}>
+                <i className="fa-solid fa-trash"></i> Evrenden Sil
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Fullscreen Lightbox Modal when Polaroid Photo is clicked */}
+      {lightboxPhoto && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(45,24,54,0.85)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 120 }} onClick={() => setLightboxPhoto(null)}>
+          <div style={{ background: '#fff', padding: '18px 18px 36px 18px', borderRadius: '28px', maxWidth: '80vw', maxHeight: '85vh', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+            <img src={lightboxPhoto} alt="lightbox" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '18px', objectFit: 'contain' }} />
+            <p style={{ marginTop: '14px', fontFamily: '"Playfair Display"', fontSize: '1.2rem', color: '#2d1836', fontWeight: 700 }}>Tam Boyut Anı Fotoğrafı ✨</p>
           </div>
         </div>
       )}
@@ -562,7 +613,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Add Modal with Real Multi-File Drag-and-Drop Local Upload */}
+      {/* Add Modal with Real Multi-File Local Upload */}
       {showAddModal && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.35)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ background: 'rgba(255, 255, 255, 0.96)', border: '2px solid rgba(255,255,255,0.95)', padding: '30px', borderRadius: '32px', width: '100%', maxWidth: '480px', boxShadow: '0 20px 50px rgba(216,180,254,0.35)' }}>
@@ -594,7 +645,7 @@ export default function App() {
                 <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Açıklama veya detay..." style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#fff0f5', color: '#2d1836', border: '1.5px solid rgba(255,183,197,0.6)', fontWeight: 600 }} />
               </div>
 
-              {/* Real Multi-File Drag & Drop Local File Uploader */}
+              {/* Real Multi-File Local Uploader */}
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '6px', color: '#6b4d75', fontWeight: 600 }}>Bilgisayardan Fotoğraf Yükle 📸</label>
                 <div className="upload-dropzone" onClick={() => fileInputRef.current?.click()}>
@@ -613,12 +664,12 @@ export default function App() {
                   />
                 </div>
 
-                {/* Uploaded Photos Preview Badges */}
+                {/* Uploaded Photos Preview Grid with Real URLs */}
                 {uploadedPhotos.length > 0 && (
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
                     {uploadedPhotos.map((url, idx) => (
-                      <div key={idx} style={{ position: 'relative', width: '54px', height: '54px', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid #ffb7c5' }}>
-                        <img src={url} alt="upload" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div key={idx} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid #ffb7c5', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+                        <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     ))}
                   </div>
