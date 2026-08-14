@@ -28,7 +28,7 @@ export default function App() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [skin, setSkin] = useState('pink');
+  const [skin, setSkin] = useState('blush');
   const [selectedMood, setSelectedMood] = useState('Great');
   const [moodNote, setMoodNote] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -130,7 +130,7 @@ export default function App() {
     }
   };
 
-  // Canvas Render Engine Loop with Kawaii Light Pastel Cotton-Candy Aesthetics
+  // Canvas Render Engine Loop with Magical Holographic & Pinterest Chic Aesthetics
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -172,12 +172,12 @@ export default function App() {
     const render = (time: number) => {
       camera.current.zoom += (camera.current.targetZoom - camera.current.zoom) * 0.1;
 
-      // Soft Light Cotton Candy Gradient Background
+      // Soft Holographic Iridescent Background Gradient
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       grad.addColorStop(0, '#fff0f5');
-      grad.addColorStop(0.4, '#ffe4e1');
-      grad.addColorStop(0.7, '#f3e5f5');
-      grad.addColorStop(1, '#e8eaf6');
+      grad.addColorStop(0.35, '#f3e8ff');
+      grad.addColorStop(0.7, '#e0e7ff');
+      grad.addColorStop(1, '#fff5f7');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -187,60 +187,61 @@ export default function App() {
       ctx.translate(cx + camera.current.x, cy + camera.current.y);
       ctx.scale(camera.current.zoom, camera.current.zoom);
 
-      // Kawaii Pastel Orbit Rings (Soft Pink & Lavender Dashes)
+      // Elegant Dashed Pearl & Lavender Orbit Rings
       const colors = [
         '',
-        'rgba(255, 117, 160, 0.45)', // Orbit 1: People (Pink)
-        'rgba(180, 160, 255, 0.45)', // Orbit 2: Hobbies (Lilac)
-        'rgba(255, 160, 190, 0.45)', // Orbit 3: Memories (Rose Gold)
-        'rgba(160, 170, 255, 0.45)'  // Orbit 4: Goals (Soft Lavender)
+        'rgba(255, 183, 197, 0.55)', // Orbit 1: People (Blush Pink)
+        'rgba(216, 180, 254, 0.55)', // Orbit 2: Hobbies (Lavender)
+        'rgba(255, 209, 220, 0.55)', // Orbit 3: Memories (Rose Gold)
+        'rgba(186, 230, 253, 0.55)'  // Orbit 4: Goals (Holo Blue)
       ];
 
       for (let i = 1; i < orbitRadii.length; i++) {
         ctx.strokeStyle = colors[i];
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8, 10]);
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([6, 10]);
         ctx.beginPath();
         ctx.arc(0, 0, orbitRadii[i] * (timelineValue / 100), 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
       }
 
-      // Core Planet (Nzlbl / Sen) - Sweet Strawberry & Cream Sphere
+      // Core Planet (Nzlbl / Sen) - Pearl Blush & Holographic Glow Sphere
       const pulse = Math.sin(time * 0.003) * 3;
       const r = 38 + pulse;
 
-      const aura = ctx.createRadialGradient(0, 0, r * 0.8, 0, 0, r * 2.4);
-      aura.addColorStop(0, 'rgba(255, 117, 160, 0.5)');
-      aura.addColorStop(1, 'rgba(255, 183, 197, 0)');
+      const aura = ctx.createRadialGradient(0, 0, r * 0.8, 0, 0, r * 2.5);
+      aura.addColorStop(0, 'rgba(255, 183, 197, 0.6)');
+      aura.addColorStop(0.6, 'rgba(216, 180, 254, 0.3)');
+      aura.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = aura;
       ctx.beginPath();
-      ctx.arc(0, 0, r * 2.4, 0, Math.PI * 2);
+      ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Saturn Ring (Pastel Pink)
+      // Saturn Ring (Iridescent Pearl)
       ctx.save();
       ctx.rotate(Math.PI / 6);
-      ctx.strokeStyle = 'rgba(255, 117, 160, 0.7)';
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(255, 183, 197, 0.8)';
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
-      ctx.ellipse(0, 0, r * 1.9, r * 0.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, r * 1.95, r * 0.5, 0, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
 
       const planetGrad = ctx.createRadialGradient(-10, -10, 2, 0, 0, r);
-      planetGrad.addColorStop(0, '#ff75a0');
-      planetGrad.addColorStop(0.7, '#ffb7c5');
-      planetGrad.addColorStop(1, '#c8b6ff');
+      planetGrad.addColorStop(0, '#ffffff');
+      planetGrad.addColorStop(0.5, '#ffb7c5');
+      planetGrad.addColorStop(1, '#d8b4fe');
       ctx.fillStyle = planetGrad;
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#3c096c';
-      ctx.font = '700 14px Fredoka';
+      ctx.fillStyle = '#2d1836';
+      ctx.font = '700 14px "Plus Jakarta Sans"';
       ctx.textAlign = 'center';
-      ctx.fillText(`🌍 ${user?.name || 'Nzlbl'} (Ana Gezegen)`, 0, r + 28);
+      ctx.fillText(`🌸 ${user?.name || 'Nzlbl'} (Ana Gezegen)`, 0, r + 28);
 
       // Celestial Objects Render
       const maxAllowedIndex = Math.floor((celestials.length * timelineValue) / 100);
@@ -266,8 +267,8 @@ export default function App() {
         ctx.translate(px, py);
 
         if (isSelected || isSearchMatch) {
-          ctx.strokeStyle = isSelected ? '#ff4d6d' : '#ff75a0';
-          ctx.lineWidth = 3.5;
+          ctx.strokeStyle = isSelected ? '#ff85a1' : '#d8b4fe';
+          ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(0, 0, 34, 0, Math.PI * 2);
           ctx.stroke();
@@ -275,22 +276,22 @@ export default function App() {
 
         if (obj.category === 'Goal' && !obj.isCompleted) {
           // Locked Planet
-          ctx.fillStyle = 'rgba(255, 240, 245, 0.95)';
-          ctx.strokeStyle = 'rgba(255, 117, 160, 0.6)';
-          ctx.lineWidth = 2.5;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.strokeStyle = 'rgba(255, 183, 197, 0.6)';
+          ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.arc(0, 0, 22, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
 
-          ctx.fillStyle = '#ff75a0';
-          ctx.font = '13px FontAwesome';
+          ctx.fillStyle = '#ff85a1';
+          ctx.font = '12px FontAwesome';
           ctx.textAlign = 'center';
           ctx.fillText('🔒', 0, 4);
         } else {
-          // Active Glowing Pastel Planet
+          // Active Glowing Iridescent Planet
           const pAura = ctx.createRadialGradient(0, 0, 10, 0, 0, 36);
-          pAura.addColorStop(0, 'rgba(255, 117, 160, 0.45)');
+          pAura.addColorStop(0, 'rgba(255, 183, 197, 0.5)');
           pAura.addColorStop(1, 'rgba(255,255,255,0)');
           ctx.fillStyle = pAura;
           ctx.beginPath();
@@ -299,17 +300,17 @@ export default function App() {
 
           const pGrad = ctx.createRadialGradient(-6, -6, 2, 0, 0, 20);
           if (obj.category === 'Person') {
-            pGrad.addColorStop(0, '#ff75a0');
-            pGrad.addColorStop(1, '#ff4d6d');
+            pGrad.addColorStop(0, '#ffb7c5');
+            pGrad.addColorStop(1, '#ff85a1');
           } else if (obj.category === 'Hobby') {
             pGrad.addColorStop(0, '#e7c6ff');
-            pGrad.addColorStop(1, '#9d4edd');
+            pGrad.addColorStop(1, '#d8b4fe');
           } else if (obj.category === 'Memory') {
-            pGrad.addColorStop(0, '#ffb7c5');
-            pGrad.addColorStop(1, '#ff75a0');
+            pGrad.addColorStop(0, '#ffffff');
+            pGrad.addColorStop(1, '#ffb7c5');
           } else {
-            pGrad.addColorStop(0, '#c8b6ff');
-            pGrad.addColorStop(1, '#70d6ff');
+            pGrad.addColorStop(0, '#bae6fd');
+            pGrad.addColorStop(1, '#c8b6ff');
           }
 
           ctx.fillStyle = pGrad;
@@ -324,8 +325,8 @@ export default function App() {
         if (obj.category === 'Person') icon = '💗';
         if (obj.category === 'Moon') icon = '🌙';
 
-        ctx.fillStyle = isSelected ? '#ff4d6d' : '#3c096c';
-        ctx.font = isSelected ? '700 13px Fredoka' : '600 12px Fredoka';
+        ctx.fillStyle = isSelected ? '#ff85a1' : '#2d1836';
+        ctx.font = isSelected ? '700 13px "Plus Jakarta Sans"' : '600 12px "Plus Jakarta Sans"';
         ctx.textAlign = 'center';
         ctx.fillText(`${icon} ${obj.title}`, 0, 32);
 
@@ -428,13 +429,13 @@ export default function App() {
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
 
-      {/* Kawaii Cute Header HUD */}
+      {/* Pinterest Chic Holographic Header HUD */}
       <header className="hud-header">
         <div className="brand">
           <div className="logo-icon">🌸</div>
           <div>
-            <h1>My Little Universe <span className="badge">Kawaii Pastel</span></h1>
-            <p className="subtitle">"Your life, your cute little universe."</p>
+            <h1>My Little Universe <span className="badge">Pinterest Soft Chic</span></h1>
+            <p className="subtitle">"Your life, your aesthetic universe."</p>
           </div>
         </div>
 
@@ -442,19 +443,19 @@ export default function App() {
         <div style={{ position: 'relative', width: '220px' }}>
           <input
             type="text"
-            placeholder="🎀 Gezegen / Anı Ara..."
+            placeholder="✨ Gezegen / Anı Ara..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ width: '100%', padding: '10px 16px', borderRadius: '20px', background: 'rgba(255,255,255,0.9)', border: '2px solid rgba(255,183,197,0.6)', color: '#3c096c', fontSize: '0.88rem', fontWeight: 600, outline: 'none' }}
+            style={{ width: '100%', padding: '10px 18px', borderRadius: '22px', background: 'rgba(255,255,255,0.75)', border: '1.5px solid rgba(255,255,255,0.9)', color: '#2d1836', fontSize: '0.88rem', fontWeight: 600, outline: 'none' }}
           />
         </div>
 
         {/* Stats Pills */}
         <div className="stats-bar">
-          <div className="stat-pill"><i className="fa-solid fa-rocket" style={{ color: '#ff75a0' }}></i> <span><strong>{celestials.filter(c => c.category === 'Goal').length}</strong> Hayal</span></div>
+          <div className="stat-pill"><i className="fa-solid fa-rocket" style={{ color: '#ff85a1' }}></i> <span><strong>{celestials.filter(c => c.category === 'Goal').length}</strong> Hayal</span></div>
           <div className="stat-pill"><i className="fa-solid fa-star" style={{ color: '#ffb7c5' }}></i> <span><strong>{celestials.filter(c => c.category === 'Memory').length}</strong> Anı</span></div>
-          <div className="stat-pill"><i className="fa-solid fa-heart" style={{ color: '#ff4d6d' }}></i> <span><strong>{celestials.filter(c => c.category === 'Person').length}</strong> Gezegen</span></div>
-          <div className="stat-pill"><i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#c8b6ff' }}></i> <span><strong>{celestials.filter(c => c.category === 'Hobby').length}</strong> Hobi</span></div>
+          <div className="stat-pill"><i className="fa-solid fa-heart" style={{ color: '#ff85a1' }}></i> <span><strong>{celestials.filter(c => c.category === 'Person').length}</strong> Gezegen</span></div>
+          <div className="stat-pill"><i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#d8b4fe' }}></i> <span><strong>{celestials.filter(c => c.category === 'Hobby').length}</strong> Hobi</span></div>
         </div>
 
         <div className="header-actions">
@@ -473,16 +474,16 @@ export default function App() {
             key={cat}
             onClick={() => setActiveCategoryFilter(cat)}
             style={{
-              padding: '8px 18px',
-              borderRadius: '20px',
-              border: '2px solid rgba(255, 183, 197, 0.6)',
-              background: activeCategoryFilter === cat ? 'linear-gradient(135deg, #ff75a0, #ffb7c5)' : 'rgba(255, 255, 255, 0.85)',
-              color: activeCategoryFilter === cat ? '#ffffff' : '#3c096c',
+              padding: '8px 20px',
+              borderRadius: '22px',
+              border: '1.5px solid rgba(255, 255, 255, 0.9)',
+              background: activeCategoryFilter === cat ? 'linear-gradient(135deg, #ffb7c5, #d8b4fe)' : 'rgba(255, 255, 255, 0.75)',
+              color: '#2d1836',
               fontSize: '0.85rem',
               fontWeight: 700,
               cursor: 'pointer',
-              backdropFilter: 'blur(12px)',
-              boxShadow: activeCategoryFilter === cat ? '0 4px 15px rgba(255, 117, 160, 0.35)' : '0 2px 8px rgba(0,0,0,0.05)'
+              backdropFilter: 'blur(16px)',
+              boxShadow: activeCategoryFilter === cat ? '0 4px 18px rgba(216, 180, 254, 0.4)' : '0 2px 8px rgba(0,0,0,0.04)'
             }}
           >
             {cat === 'ALL' ? '🌌 Tümü' : cat === 'Goal' ? '🚀 Hayaller' : cat === 'Memory' ? '⭐ Anılar' : cat === 'Person' ? '💗 İnsanlar' : cat === 'Hobby' ? '✨ Hobiler' : '🌙 Uydular'}
@@ -491,15 +492,15 @@ export default function App() {
       </div>
 
       {/* Big Bang Timeline Slider Bar (Bottom Center) */}
-      <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(255, 255, 255, 0.88)', backdropFilter: 'blur(20px)', border: '2px solid rgba(255,183,197,0.6)', padding: '14px 28px', borderRadius: '32px', display: 'flex', alignItems: 'center', gap: '18px', zIndex: 10, boxShadow: '0 10px 35px rgba(255,117,160,0.2)', minWidth: '480px' }}>
-        <button onClick={togglePlayTimeline} className="btn btn-primary" style={{ padding: '8px 16px', borderRadius: '16px' }}>
+      <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(255, 255, 255, 0.75)', backdropFilter: 'blur(24px)', border: '1.5px solid rgba(255,255,255,0.9)', padding: '14px 30px', borderRadius: '32px', display: 'flex', alignItems: 'center', gap: '18px', zIndex: 10, boxShadow: '0 12px 40px rgba(216, 180, 254, 0.3)', minWidth: '480px' }}>
+        <button onClick={togglePlayTimeline} className="btn btn-primary" style={{ padding: '8px 18px', borderRadius: '18px' }}>
           {isPlayingTimeline ? '⏸️ Durdur' : '▶️ Big Bang İle Büyüt'}
         </button>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#3c096c', fontWeight: 700 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#2d1836', fontWeight: 700 }}>
             <span>🌱 İlk Gün</span>
-            <span style={{ color: '#ff4d6d' }}>%{timelineValue} Genişleme</span>
+            <span style={{ color: '#ff85a1' }}>%{timelineValue} Genişleme</span>
             <span>✨ Bugün</span>
           </div>
           <input
@@ -508,43 +509,43 @@ export default function App() {
             max="100"
             value={timelineValue}
             onChange={(e) => setTimelineValue(Number(e.target.value))}
-            style={{ width: '100%', cursor: 'pointer', accentColor: '#ff75a0' }}
+            style={{ width: '100%', cursor: 'pointer', accentColor: '#ff85a1' }}
           />
         </div>
       </div>
 
-      {/* Kawaii Cute Glassmorphism Side Drawer Inspector */}
+      {/* Holographic Pinterest Polaroid Side Drawer Inspector */}
       {selectedObject && (
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '420px', height: '100vh', background: 'rgba(255, 245, 248, 0.94)', backdropFilter: 'blur(24px)', borderLeft: '2px solid rgba(255, 183, 197, 0.6)', boxShadow: '-10px 0 50px rgba(255,117,160,0.2)', zIndex: 60, padding: '30px', display: 'flex', flexDirection: 'column', transition: 'all 0.4s ease-out' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '420px', height: '100vh', background: 'rgba(255, 245, 248, 0.88)', backdropFilter: 'blur(30px)', borderLeft: '1.5px solid rgba(255, 255, 255, 0.9)', boxShadow: '-10px 0 50px rgba(216,180,254,0.3)', zIndex: 60, padding: '32px', display: 'flex', flexDirection: 'column', transition: 'all 0.4s ease-out' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,117,160,0.15)', color: '#ff4d6d', border: '1.5px solid rgba(255,117,160,0.4)', letterSpacing: '1px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,183,197,0.3)', color: '#2d1836', border: '1px solid rgba(255,255,255,0.9)', letterSpacing: '1px' }}>
               {selectedObject.category.toUpperCase()}
             </span>
-            <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,117,160,0.15)', border: 'none', color: '#ff4d6d', width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', fontWeight: 800 }}>✕</button>
+            <button onClick={() => setSelectedObject(null)} style={{ background: 'rgba(255,255,255,0.8)', border: 'none', color: '#2d1836', width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
           </div>
 
           {selectedObject.imageUrl ? (
-            <div style={{ background: '#fff', padding: '12px 12px 24px 12px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(255,117,160,0.2)', transform: 'rotate(-2deg)', marginBottom: '20px', border: '2px solid #ffe4e1' }}>
-              <img src={selectedObject.imageUrl} alt={selectedObject.title} style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '12px' }} />
-              <p style={{ color: '#3c096c', fontSize: '0.9rem', fontWeight: 700, fontFamily: 'Fredoka', textAlign: 'center', marginTop: '10px' }}>{selectedObject.title}</p>
+            <div style={{ background: '#fff', padding: '14px 14px 26px 14px', borderRadius: '22px', boxShadow: '0 12px 35px rgba(216,180,254,0.3)', transform: 'rotate(-2deg)', marginBottom: '20px', border: '1.5px solid rgba(255,255,255,0.9)' }}>
+              <img src={selectedObject.imageUrl} alt={selectedObject.title} style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '14px' }} />
+              <p style={{ color: '#2d1836', fontSize: '0.92rem', fontWeight: 700, fontFamily: '"Playfair Display"', textAlign: 'center', marginTop: '12px' }}>{selectedObject.title}</p>
             </div>
           ) : (
-            <div style={{ fontSize: '4.5rem', textAlign: 'center', margin: '20px 0', filter: 'drop-shadow(0 0 15px rgba(255,117,160,0.4))' }}>
+            <div style={{ fontSize: '4.5rem', textAlign: 'center', margin: '20px 0', filter: 'drop-shadow(0 4px 20px rgba(216,180,254,0.5))' }}>
               {selectedObject.category === 'Memory' ? '⭐' : selectedObject.category === 'Person' ? '💗' : selectedObject.category === 'Hobby' ? '✨' : '🪐'}
             </div>
           )}
 
-          <h2 style={{ fontSize: '1.7rem', fontWeight: 800, marginBottom: '6px', color: '#3c096c' }}>{selectedObject.title}</h2>
-          <p style={{ fontSize: '0.85rem', color: '#7b2cbf', marginBottom: '16px', fontWeight: 600 }}><i className="fa-regular fa-calendar"></i> {new Date(selectedObject.createdAt).toLocaleDateString('tr-TR')}</p>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, fontFamily: '"Playfair Display"', marginBottom: '6px', color: '#2d1836' }}>{selectedObject.title}</h2>
+          <p style={{ fontSize: '0.85rem', color: '#6b4d75', marginBottom: '16px', fontWeight: 500 }}><i className="fa-regular fa-calendar"></i> {new Date(selectedObject.createdAt).toLocaleDateString('tr-TR')}</p>
           
-          <div style={{ background: 'rgba(255, 255, 255, 0.8)', padding: '16px', borderRadius: '18px', border: '1.5px solid rgba(255, 183, 197, 0.5)', marginBottom: '20px', lineHeight: 1.6, fontSize: '0.95rem', color: '#3c096c', fontWeight: 600 }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.75)', padding: '18px', borderRadius: '20px', border: '1.5px solid rgba(255, 255, 255, 0.9)', marginBottom: '20px', lineHeight: 1.6, fontSize: '0.95rem', color: '#2d1836', fontWeight: 500 }}>
             {selectedObject.description || 'Bu varlık için herhangi bir detay girilmemiş.'}
           </div>
 
           {selectedObject.category === 'Goal' && (
             <div style={{ marginBottom: '20px' }}>
               {selectedObject.isCompleted ? (
-                <div style={{ padding: '14px', background: 'rgba(255, 183, 197, 0.25)', border: '2px solid #ff75a0', borderRadius: '18px', color: '#ff4d6d', fontWeight: 700, textAlign: 'center' }}>
+                <div style={{ padding: '14px', background: 'rgba(255, 183, 197, 0.3)', border: '1.5px solid #ffb7c5', borderRadius: '20px', color: '#2d1836', fontWeight: 700, textAlign: 'center' }}>
                   ✨ PLANET DISCOVERED! (Keşfedildi)
                 </div>
               ) : (
@@ -556,7 +557,7 @@ export default function App() {
           )}
 
           <div style={{ marginTop: 'auto', display: 'flex', gap: '10px' }}>
-            <button onClick={() => handleDeleteObject(selectedObject.id)} className="btn" style={{ background: 'rgba(255,77,109,0.15)', color: '#ff4d6d', border: '1.5px solid rgba(255,77,109,0.4)', width: '100%', justifyContent: 'center' }}>
+            <button onClick={() => handleDeleteObject(selectedObject.id)} className="btn" style={{ background: 'rgba(255,133,161,0.2)', color: '#2d1836', border: '1.5px solid rgba(255,133,161,0.4)', width: '100%', justifyContent: 'center' }}>
               <i className="fa-solid fa-trash"></i> Evrenden Sil
             </button>
           </div>
@@ -565,21 +566,21 @@ export default function App() {
 
       {/* Magic Event Toast */}
       {magicToast && (
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#ffffff', border: '3px solid #ff75a0', padding: '30px 50px', borderRadius: '32px', textAlign: 'center', zIndex: 100, boxShadow: '0 0 50px rgba(255,117,160,0.5)' }}>
-          <h2 style={{ background: 'linear-gradient(135deg, #ff4d6d, #9d4edd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '2rem', marginBottom: '10px', fontWeight: 800 }}>{magicToast.title}</h2>
-          <p style={{ color: '#3c096c', fontWeight: 700 }}>{magicToast.message}</p>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(255, 255, 255, 0.92)', border: '2px solid #ffb7c5', padding: '32px 54px', borderRadius: '36px', textAlign: 'center', zIndex: 100, boxShadow: '0 0 60px rgba(216,180,254,0.6)' }}>
+          <h2 style={{ fontFamily: '"Playfair Display"', color: '#2d1836', fontSize: '2.1rem', marginBottom: '10px', fontWeight: 700 }}>{magicToast.title}</h2>
+          <p style={{ color: '#6b4d75', fontWeight: 600 }}>{magicToast.message}</p>
         </div>
       )}
 
       {/* Add Modal */}
       {showAddModal && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(60,9,108,0.3)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: '#ffffff', border: '2px solid rgba(255,183,197,0.8)', padding: '28px', borderRadius: '28px', width: '100%', maxWidth: '460px', boxShadow: '0 15px 40px rgba(255,117,160,0.25)' }}>
-            <h2 style={{ marginBottom: '16px', color: '#3c096c' }}>Evrene Yeni Varlık Ekle 🌸</h2>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.3)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.95)', border: '2px solid rgba(255,255,255,0.9)', padding: '30px', borderRadius: '30px', width: '100%', maxWidth: '460px', boxShadow: '0 20px 50px rgba(216,180,254,0.3)' }}>
+            <h2 style={{ fontFamily: '"Playfair Display"', marginBottom: '16px', color: '#2d1836' }}>Evrene Yeni Varlık Ekle 🌸</h2>
             <form onSubmit={handleAddObject}>
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', color: '#7b2cbf', fontWeight: 700 }}>Tür</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '14px', background: '#fff0f5', color: '#3c096c', border: '2px solid rgba(255,183,197,0.6)', fontWeight: 600 }}>
+                <label style={{ display: 'block', marginBottom: '6px', color: '#6b4d75', fontWeight: 600 }}>Tür</label>
+                <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#fff0f5', color: '#2d1836', border: '1.5px solid rgba(255,183,197,0.6)', fontWeight: 600 }}>
                   <option value="Goal">🚀 Keşfedilmemiş Hayal / Hedef</option>
                   <option value="Memory">⭐ Anı Yıldızı</option>
                   <option value="Person">💗 Önemli İnsan</option>
@@ -589,27 +590,27 @@ export default function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', color: '#7b2cbf', fontWeight: 700 }}>Başlık</label>
-                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Örn: Japonya Tatili" required style={{ width: '100%', padding: '12px', borderRadius: '14px', background: '#fff0f5', color: '#3c096c', border: '2px solid rgba(255,183,197,0.6)', fontWeight: 600 }} />
+                <label style={{ display: 'block', marginBottom: '6px', color: '#6b4d75', fontWeight: 600 }}>Başlık</label>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Örn: Japonya Tatili" required style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#fff0f5', color: '#2d1836', border: '1.5px solid rgba(255,183,197,0.6)', fontWeight: 600 }} />
               </div>
 
               <div style={{ marginBottom: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label style={{ color: '#7b2cbf', fontWeight: 700 }}>Açıklama / Hikaye</label>
-                  <button type="button" onClick={handleAIAnalyze} disabled={isAnalyzing} style={{ background: 'rgba(255,117,160,0.15)', color: '#ff4d6d', border: '1.5px solid #ff75a0', padding: '4px 12px', borderRadius: '14px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 700 }}>
+                  <label style={{ color: '#6b4d75', fontWeight: 600 }}>Açıklama / Hikaye</label>
+                  <button type="button" onClick={handleAIAnalyze} disabled={isAnalyzing} style={{ background: 'rgba(255,183,197,0.3)', color: '#2d1836', border: '1.5px solid #ffb7c5', padding: '4px 12px', borderRadius: '16px', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
                     {isAnalyzing ? 'Analiz ediliyor...' : '✨ AI Otomatik Analiz Et'}
                   </button>
                 </div>
-                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Açıklama veya detay..." style={{ width: '100%', padding: '12px', borderRadius: '14px', background: '#fff0f5', color: '#3c096c', border: '2px solid rgba(255,183,197,0.6)', fontWeight: 600 }} />
+                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Açıklama veya detay..." style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#fff0f5', color: '#2d1836', border: '1.5px solid rgba(255,183,197,0.6)', fontWeight: 600 }} />
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', color: '#7b2cbf', fontWeight: 700 }}>Fotoğraf URL (İsteğe Bağlı)</label>
-                <input type="text" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." style={{ width: '100%', padding: '12px', borderRadius: '14px', background: '#fff0f5', color: '#3c096c', border: '2px solid rgba(255,183,197,0.6)', fontWeight: 600 }} />
+                <label style={{ display: 'block', marginBottom: '6px', color: '#6b4d75', fontWeight: 600 }}>Fotoğraf URL (İsteğe Bağlı)</label>
+                <input type="text" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#fff0f5', color: '#2d1836', border: '1.5px solid rgba(255,183,197,0.6)', fontWeight: 600 }} />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" className="btn" style={{ background: '#ffe4e1', color: '#3c096c' }} onClick={() => setShowAddModal(false)}>İptal</button>
+                <button type="button" className="btn" style={{ background: '#f3e8ff', color: '#2d1836' }} onClick={() => setShowAddModal(false)}>İptal</button>
                 <button type="submit" className="btn btn-primary">Evrene Yolla 🚀</button>
               </div>
             </form>
@@ -619,18 +620,18 @@ export default function App() {
 
       {/* Mood Modal */}
       {showMoodModal && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(60,9,108,0.3)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: '#ffffff', border: '2px solid rgba(200,182,255,0.6)', padding: '28px', borderRadius: '28px', width: '100%', maxWidth: '420px', textAlign: 'center', boxShadow: '0 15px 40px rgba(200,182,255,0.3)' }}>
-            <h2 style={{ marginBottom: '12px', color: '#3c096c' }}>Günün Yıldızı 🌙</h2>
-            <p style={{ marginBottom: '16px', color: '#7b2cbf', fontWeight: 600 }}>Günün nasıl geçti?</p>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(45,24,54,0.3)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.95)', border: '2px solid rgba(255,255,255,0.9)', padding: '30px', borderRadius: '30px', width: '100%', maxWidth: '420px', textAlign: 'center', boxShadow: '0 20px 50px rgba(216,180,254,0.3)' }}>
+            <h2 style={{ fontFamily: '"Playfair Display"', marginBottom: '12px', color: '#2d1836' }}>Günün Yıldızı 🌙</h2>
+            <p style={{ marginBottom: '16px', color: '#6b4d75', fontWeight: 500 }}>Günün nasıl geçti?</p>
             <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: '2.2rem', marginBottom: '20px', cursor: 'pointer' }}>
               {['😊', '🙂', '😐', '😔', '😭'].map((emo, idx) => (
-                <span key={idx} onClick={() => setSelectedMood(['Great','Good','Okay','NotGreat','Terrible'][idx])} style={{ padding: '6px', borderRadius: '16px', background: selectedMood === ['Great','Good','Okay','NotGreat','Terrible'][idx] ? 'rgba(255,117,160,0.25)' : 'transparent' }}>{emo}</span>
+                <span key={idx} onClick={() => setSelectedMood(['Great','Good','Okay','NotGreat','Terrible'][idx])} style={{ padding: '6px', borderRadius: '18px', background: selectedMood === ['Great','Good','Okay','NotGreat','Terrible'][idx] ? 'rgba(255,183,197,0.4)' : 'transparent' }}>{emo}</span>
               ))}
             </div>
-            <input type="text" value={moodNote} onChange={e => setMoodNote(e.target.value)} placeholder="Güne dair not..." style={{ width: '100%', padding: '12px', borderRadius: '14px', background: '#fff0f5', color: '#3c096c', border: '2px solid rgba(255,183,197,0.6)', marginBottom: '20px', fontWeight: 600 }} />
+            <input type="text" value={moodNote} onChange={e => setMoodNote(e.target.value)} placeholder="Güne dair not..." style={{ width: '100%', padding: '12px', borderRadius: '16px', background: '#fff0f5', color: '#2d1836', border: '1.5px solid rgba(255,183,197,0.6)', marginBottom: '20px', fontWeight: 600 }} />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button type="button" className="btn" style={{ background: '#ffe4e1', color: '#3c096c' }} onClick={() => setShowMoodModal(false)}>İptal</button>
+              <button type="button" className="btn" style={{ background: '#f3e8ff', color: '#2d1836' }} onClick={() => setShowMoodModal(false)}>İptal</button>
               <button type="button" className="btn btn-mood" onClick={handleSaveMood}>Yıldızı Oluştur ⭐</button>
             </div>
           </div>
