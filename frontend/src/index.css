@@ -1,25 +1,21 @@
-/* Pinterest Minimal Soft Chic + Magical Holographic Glassmorphism Design System */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+/* Ultra-Clean Apple Glass Dock & Immersion Design System */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
 
 :root {
-  --bg-holographic: radial-gradient(ellipse at top left, #fff0f5 0%, #f3e8ff 35%, #e0e7ff 70%, #fff5f7 100%);
+  --bg-gradient: radial-gradient(ellipse at center, #fff0f5 0%, #f3e8ff 45%, #e0e7ff 80%, #fff5f7 100%);
   --font-serif: 'Playfair Display', serif;
-  --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
 
-  --color-text-primary: #2d1836;
-  --color-text-muted: #6b4d75;
-  
-  --color-blush: #ffb7c5;
-  --color-rose: #ff85a1;
-  --color-pearl: #ffffff;
+  --color-dark: #2d1836;
+  --color-muted: #6b4d75;
+  --color-accent: #ff85a1;
   --color-lavender: #d8b4fe;
-  --color-holo-glow: linear-gradient(135deg, rgba(255,183,197,0.6), rgba(216,180,254,0.6), rgba(186,230,253,0.6));
 
-  --holo-glass-bg: rgba(255, 255, 255, 0.65);
-  --holo-glass-border: rgba(255, 255, 255, 0.85);
-  --holo-glass-shadow: 0 12px 40px 0 rgba(216, 180, 254, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.6);
+  --dock-bg: rgba(255, 255, 255, 0.78);
+  --dock-border: rgba(255, 255, 255, 0.95);
+  --dock-shadow: 0 16px 45px 0 rgba(216, 180, 254, 0.35);
 
-  --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-dock: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 * {
@@ -33,9 +29,9 @@ body, html {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: var(--bg-holographic);
+  background: var(--bg-gradient);
   font-family: var(--font-sans);
-  color: var(--color-text-primary);
+  color: var(--color-dark);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -46,87 +42,136 @@ body, html {
   overflow: hidden;
 }
 
-/* Holographic Glass Header HUD */
-.hud-header {
+/* Floating Brand Widget (Top Left) */
+.brand-floating {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 32px;
-  background: var(--holo-glass-bg);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1.5px solid var(--holo-glass-border);
-  border-radius: 30px;
-  box-shadow: var(--holo-glass-shadow);
-  z-index: 10;
-}
-
-.brand { display: flex; align-items: center; gap: 16px; }
-.logo-icon { font-size: 2.2rem; filter: drop-shadow(0 4px 15px rgba(216, 180, 254, 0.6)); animation: floatGlow 4s ease-in-out infinite; }
-.brand h1 { font-family: var(--font-serif); font-size: 1.45rem; font-weight: 700; display: flex; align-items: center; gap: 10px; color: var(--color-text-primary); letter-spacing: -0.3px; }
-.brand .badge { font-family: var(--font-sans); font-size: 0.65rem; padding: 4px 12px; background: var(--color-holo-glow); border-radius: 20px; text-transform: uppercase; font-weight: 700; color: #2d1836; border: 1px solid rgba(255,255,255,0.8); }
-.brand .subtitle { font-family: var(--font-sans); font-size: 0.82rem; color: var(--color-text-muted); font-weight: 500; font-style: italic; }
-
-.stats-bar { display: flex; align-items: center; gap: 12px; }
-.stat-pill {
+  top: 24px;
+  left: 28px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   background: rgba(255, 255, 255, 0.75);
-  padding: 8px 18px;
-  border-radius: 22px;
+  backdrop-filter: blur(24px);
+  padding: 10px 22px;
+  border-radius: 26px;
   border: 1.5px solid rgba(255, 255, 255, 0.9);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  box-shadow: 0 4px 15px rgba(216, 180, 254, 0.15);
+  box-shadow: 0 8px 30px rgba(216, 180, 254, 0.25);
+  z-index: 15;
 }
 
-.header-actions { display: flex; align-items: center; gap: 14px; }
+.brand-floating h1 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-dark);
+}
 
-/* Pinterest Chic Marshmallow Glass Buttons */
-.btn {
-  display: inline-flex;
+.brand-floating p {
+  font-size: 0.76rem;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+/* Floating Search Widget (Top Right) */
+.search-floating {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  border-radius: 22px;
+  gap: 10px;
+  z-index: 15;
+}
+
+.search-input {
+  width: 240px;
+  padding: 12px 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  color: var(--color-dark);
   font-size: 0.88rem;
   font-weight: 600;
-  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  outline: none;
+  box-shadow: 0 8px 30px rgba(216, 180, 254, 0.2);
+  transition: var(--transition-dock);
+}
+
+.search-input:focus {
+  width: 300px;
+  border-color: #ff85a1;
+  box-shadow: 0 10px 35px rgba(255, 133, 161, 0.35);
+}
+
+/* Apple Floating Mac Glass Dock (Bottom Center) */
+.apple-dock {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--dock-bg);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1.5px solid var(--dock-border);
+  border-radius: 32px;
+  box-shadow: var(--dock-shadow);
+  z-index: 20;
+}
+
+.dock-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 22px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: var(--color-dark);
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: var(--transition-smooth);
+  transition: var(--transition-dock);
   font-family: inherit;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #ffb7c5 0%, #d8b4fe 100%);
+.dock-item:hover {
+  transform: translateY(-4px) scale(1.04);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 20px rgba(216, 180, 254, 0.3);
+}
+
+.dock-item.active {
+  background: linear-gradient(135deg, #ffb7c5, #d8b4fe);
   color: #2d1836;
-  box-shadow: 0 6px 20px rgba(255, 183, 197, 0.45);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 22px rgba(255, 133, 161, 0.4);
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(216, 180, 254, 0.6);
+.dock-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(107, 77, 117, 0.2);
+  margin: 0 4px;
 }
 
-.btn-mood {
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--color-text-primary);
+/* File Upload Box */
+.upload-dropzone {
+  border: 2px dashed rgba(255, 133, 161, 0.6);
+  background: rgba(255, 240, 245, 0.6);
+  padding: 24px;
+  border-radius: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition-dock);
 }
 
-.btn-mood:hover {
-  background: rgba(255, 255, 255, 0.95);
-  transform: translateY(-2px);
+.upload-dropzone:hover {
+  background: rgba(255, 240, 245, 0.9);
+  border-color: #ff85a1;
 }
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--color-text-primary);
-}
-
-@keyframes floatGlow { 0%, 100% { transform: translateY(0); filter: drop-shadow(0 4px 15px rgba(216, 180, 254, 0.6)); } 50% { transform: translateY(-6px); filter: drop-shadow(0 8px 25px rgba(255, 183, 197, 0.8)); } }
